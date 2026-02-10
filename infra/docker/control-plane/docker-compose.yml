@@ -1,0 +1,24 @@
+services:
+  control-plane-api:
+    build:
+      context: ../../../control-plane/api
+      dockerfile: Dockerfile
+    container_name: control-plane-api
+    ports:
+      - "8088:8080"
+    environment:
+      CONTROL_PLANE_VERSION: "0.1.0"
+      DEPLOYMENT_VERSION: "infra-local"
+    restart: unless-stopped
+    networks:
+      - platform-control-plane
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+networks:
+  platform-control-plane:
+    name: platform-control-plane

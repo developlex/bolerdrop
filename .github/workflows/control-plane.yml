@@ -1,0 +1,51 @@
+name: control-plane
+
+on:
+  push:
+    paths:
+      - ".github/workflows/control-plane.yml"
+      - "control-plane/**"
+      - "infra/scripts/health-check.sh"
+      - "Makefile"
+  pull_request:
+    paths:
+      - ".github/workflows/control-plane.yml"
+      - "control-plane/**"
+      - "infra/scripts/health-check.sh"
+      - "Makefile"
+
+jobs:
+  control-plane-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate compose config
+        run: docker compose -f control-plane/docker-compose.yml config >/dev/null
+
+      - name: Build and start control plane
+        run: docker compose -f control-plane/docker-compose.yml up -d --build
+
+      - name: Wait for health endpoint
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8088/health >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "control plane did not become healthy in time"
+          exit 1
+
+      - name: Run health-check script
+        run: bash infra/scripts/health-check.sh
+
+      - name: Dump container logs on failure
+        if: failure()
+        run: docker compose -f control-plane/docker-compose.yml logs
+
+      - name: Shutdown
+        if: always()
+        run: docker compose -f control-plane/docker-compose.yml down --remove-orphans

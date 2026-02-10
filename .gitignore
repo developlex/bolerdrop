@@ -1,0 +1,5 @@
+instances/**/.env
+instances/**/.env.*
+instances/**/secrets*
+*.pem
+*.key

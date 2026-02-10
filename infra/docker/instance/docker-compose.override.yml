@@ -1,0 +1,15 @@
+# Per-store instance override template.
+# Copy into instances/<store-id>/docker-compose.override.yml and update values.
+
+services:
+  shop-agent:
+    image: alpine:3.20
+    container_name: ${STORE_ID}-shop-agent
+    command: ["sh", "-c", "while true; do sleep 3600; done"]
+    restart: unless-stopped
+    networks:
+      - store-network
+
+networks:
+  store-network:
+    name: ${STORE_ID}-network

@@ -1,0 +1,19 @@
+services:
+  platform-gateway:
+    image: nginx:1.27-alpine
+    container_name: platform-gateway
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    networks:
+      - platform-shared
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+networks:
+  platform-shared:
+    name: platform-shared
