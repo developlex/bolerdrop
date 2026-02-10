@@ -3,3 +3,15 @@ instances/**/.env.*
 instances/**/secrets*
 *.pem
 *.key
+*.crt
+*.p12
+
+# Python cache/build artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Local editor/system files
+.idea/
+.vscode/
+.DS_Store
