@@ -186,6 +186,20 @@ Secrets rules are defined in:
 
 `SECRETS_MANAGEMENT.md`
 
+### 8.1 Current Implementation Profile (Documented)
+
+Current implementation profile for protected endpoints:
+
+- `GET /health` is public for liveness/readiness checks.
+- all other endpoints require bearer authorization.
+- default mode validates signed short-lived JWTs.
+- tokens must include valid issuer, audience, and time-window claims.
+- token scope may include store identity and must not cross store boundaries.
+
+Implementation profile details must be configured via runtime environment injection.
+No credential values are documented in this file.
+This subsection documents current implementation state and must not be interpreted as secret material.
+
 ## 9. Observability & Audit (Mandatory)
 
 All Shop Agent calls must produce auditable records including:

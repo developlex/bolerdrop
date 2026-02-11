@@ -112,6 +112,7 @@ commerce-platform-blueprint/
 │   │
 │   └── shop-agent/
 │       ├── src/
+│       ├── tests/
 │       ├── Dockerfile
 │       └── openapi.yaml
 │

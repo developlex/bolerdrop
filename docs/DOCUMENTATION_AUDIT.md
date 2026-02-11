@@ -29,7 +29,7 @@ It is used to:
 |---|---|---:|---|
 | `docs/PROJECT_VISION.md` | DRAFT | 78% | Strong business framing; can add measurable business KPIs. |
 | `docs/ARCHITECTURE_DECISIONS.md` | DRAFT | 82% | Core invariants defined; references added. |
-| `docs/PROJECT_STRUCTURE.md` | DRAFT | 90% | Updated structure map and authority precedence now align with current repo layout and governance boundaries. |
+| `docs/PROJECT_STRUCTURE.md` | DRAFT | 91% | Structure map now includes current workflow files and Shop Agent test directory in addition to governance-aligned boundaries. |
 | `docs/GIT_WORKFLOW.md` | DRAFT | 96% | Branch model (`main`/`master` stable + `dev` working), direct-push policy, code-owner review requirement, reproducible branch-protection steps, and optional auto-merge flow are explicitly defined. |
 | `docs/DOCUMENTATION_AUDIT.md` | ACTIVE | 70% | Baseline audit in place; update each doc sprint. |
 | `docs/ISOLATION_MODES.md` | DRAFT | 88% | Comprehensive mode model, invariants, blast radius, and open questions. |
@@ -45,7 +45,7 @@ It is used to:
 | `docs/FRONTEND_ARCHITECTURE.md` | DRAFT | 90% | Frontend layer boundaries, data-access model, and contract-driven integration rules are now defined. |
 | `docs/GRAPHQL_CONTRACTS.md` | DRAFT | 91% | GraphQL boundary categories, isolation/security exposure rules, and mutation constraints are now contractually defined. |
 | `docs/CONTROL_PLANE_OVERVIEW.md` | DRAFT | 90% | Conceptual/structural Control Plane boundaries, interaction model, and non-responsibilities are now explicitly defined. |
-| `docs/SHOP_AGENT_API.md` | DRAFT | 91% | Contractual Shop Agent API surface now defines strict allowlist operations, constraints, and prohibited capabilities. |
+| `docs/SHOP_AGENT_API.md` | DRAFT | 93% | Contractual Shop Agent API now includes documented implemented auth profile (protected endpoints with signed short-lived token validation). |
 | `docs/CI_CD_OVERVIEW.md` | DRAFT | 90% | Contractual CI/CD model now defines invariants, gates, traceability, and environment boundaries. |
 | `docs/DEPLOYMENT_PIPELINE.md` | DRAFT | 90% | Contractual deployment stages, rollback triggers, and traceability guarantees are now defined. |
 | `docs/ROLLBACK_STRATEGY.md` | DRAFT | 90% | Contractual rollback triggers, guarantees, constraints, and verification requirements are now defined. |
@@ -53,12 +53,12 @@ It is used to:
 | `docs/DOCKER_ORCHESTRATION_MODEL.md` | DRAFT | 90% | Container orchestration boundaries, unit types, and isolation-preserving lifecycle rules are now defined. |
 | `docs/OBSERVABILITY_MODEL.md` | DRAFT | 91% | Required health/log/metric/trace/audit signals and platform-vs-store visibility boundaries are now defined. |
 | `docs/IMPLEMENTATION_ROADMAP.md` | DRAFT | 89% | Contract-to-code phase sequencing, milestones, and delivery exit criteria are now defined. |
-| `docs/LOCAL_EXECUTION_FLOW.md` | DRAFT | 90% | Exact local and CI command execution order for the current control-plane slice is now documented. |
+| `docs/LOCAL_EXECUTION_FLOW.md` | DRAFT | 93% | Local/CI execution steps now cover both Control Plane and Shop Agent slices, including auth-injected smoke verification flow. |
 | `docs/RUNBOOK.md` | DRAFT | 89% | Operational contract now defines incident categories, response boundaries, and prohibited operator actions. |
 | `docs/SECURITY_MODEL.md` | DRAFT | 89% | Contractual trust boundaries, threat model, and security control relationships are now defined. |
 | `docs/SECURITY_THREAT_MODEL.md` | DRAFT | 91% | Platform-wide threat classes and required mitigations now align with PCI/OWASP baseline and component boundaries. |
 | `docs/TESTING_STRATEGY.md` | DRAFT | 90% | Contractual layered test strategy now defines ownership, boundaries, and mandatory execution rules. |
-| `docs/SMOKE_TESTS.md` | DRAFT | 90% | Contractual smoke gate now defines required checks, pass/fail rules, rollback coupling, and traceability. |
+| `docs/SMOKE_TESTS.md` | DRAFT | 91% | Smoke gate now explicitly requires authorized Shop Agent operational checks in addition to baseline health checks. |
 | `docs/TECH_STACK.md` | DRAFT | 90% | Platform technology inventory now defines stack domains, boundaries, and introduction rules. |
 | `docs/MAGENTO_PLUGIN_STRATEGY.md` | DRAFT | 90% | Magento extension baseline now documents low-custom-code plugin choices and compatibility guardrails. |
 | `docs/adr/README.md` | DRAFT | 92% | ADR governance is now fully defined with scope triggers, lifecycle, mandatory template, and supersession rules. |
