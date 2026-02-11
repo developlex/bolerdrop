@@ -149,6 +149,7 @@ commerce-platform-blueprint/
 │       ├── magento.yml
 │       ├── control-plane.yml
 │       ├── pr-gate.yml
+│       ├── owner-approval-gate.yml
 │       ├── pr-automerge.yml
 │       └── shop-agent.yml
 │

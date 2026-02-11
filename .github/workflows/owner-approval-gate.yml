@@ -1,0 +1,53 @@
+name: owner-approval-gate
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+  pull_request_review:
+    types:
+      - submitted
+
+permissions:
+  pull-requests: read
+
+jobs:
+  owner-approval-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require repository-owner APPROVED review
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            let prNumber = context.payload.pull_request?.number;
+            if (!prNumber && context.payload.review?.pull_request_url) {
+              prNumber = Number(context.payload.review.pull_request_url.split('/').pop());
+            }
+            if (!prNumber) {
+              core.setFailed('Unable to resolve PR number.');
+              return;
+            }
+
+            const reviews = await github.paginate(github.rest.pulls.listReviews, {
+              owner,
+              repo,
+              pull_number: prNumber,
+              per_page: 100
+            });
+
+            const ownerApproved = reviews.some(
+              (r) => r.user?.login === owner && r.state === 'APPROVED'
+            );
+
+            if (!ownerApproved) {
+              core.setFailed(`Missing APPROVED review from repository owner @${owner}.`);
+              return;
+            }
+
+            core.info(`Approved by repository owner @${owner}.`);
