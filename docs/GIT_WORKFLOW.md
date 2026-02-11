@@ -19,8 +19,11 @@ Its goals are to:
 
 The repository uses the following long-lived branches:
 
-- `master`: production-ready stable branch
+- `main`: production-ready stable branch
+- `master`: production-ready stable branch (compatibility/prod mirror if used)
 - `dev`: integration branch for accepted feature work
+
+Delivery governance is enforced on stable branches (`main` and `master`).
 
 Short-lived branches:
 
@@ -36,15 +39,15 @@ Required path for normal development:
 
 1. Branch from `dev` into `feature/*` (or `fix/*`).
 2. Implement changes and tests in the branch.
-3. Open PR into `dev`.
-4. Merge only after required checks pass.
+3. Push feature updates directly to the working branch as needed.
+4. Merge to `dev` either by direct push (allowed) or by PR (recommended for larger changes).
 
-Promotion flow:
+Promotion flow to production branches:
 
-1. Open PR from `dev` into `master`.
-2. Merge only after release checks pass.
+1. Open PR from `dev` (or `feature/*` when needed) into `main` or `master`.
+2. Merge only after required approvals and checks pass.
 
-Direct commits to `master` and `dev` are forbidden.
+Direct commits to `main` and `master` are forbidden.
 
 ## 4. Pull Request Rules
 
@@ -61,6 +64,11 @@ PR requirements:
 At least one reviewer approval is required before merge.
 
 Repository pull request template must be used to enforce consistent reviewer context.
+
+Optional automation:
+
+- If PR has label `automerge`, workflow `pr-automerge` may enable auto-merge after approval + green checks.
+- Auto-merge automation applies only to PRs targeting `main` or `master`.
 
 ## 5. Test Coverage Requirement
 
@@ -80,13 +88,13 @@ Allowed merge strategy:
 
 Rules:
 
-- no force-push to `master` or `dev`,
+- no force-push to `main` or `master`,
 - no bypass of required checks,
 - no merge with failing CI.
 
 ## 7. Branch Protection (Repository Setting Requirement)
 
-Repository settings must enforce for `master` and `dev`:
+Repository settings must enforce for `main` and `master`:
 
 - require PR before merge,
 - require status checks to pass,
@@ -95,7 +103,124 @@ Repository settings must enforce for `master` and `dev`:
 
 If settings and this document conflict, stricter controls apply.
 
-## 8. Relationship to Other Documents
+## 8. Reproducible Setup Procedure
+
+This section documents the exact bootstrap sequence to reproduce repository governance.
+
+### 8.1 Create long-lived branches
+
+```bash
+git checkout main
+git branch dev main
+git push -u origin main
+git push -u origin dev
+```
+
+Optional compatibility branch:
+
+```bash
+git branch master main
+git push -u origin master
+```
+
+### 8.2 Add PR template and required check workflow
+
+Required files:
+
+- `.github/pull_request_template.md` (includes `What changed` and `Why this change is needed`)
+- `.github/workflows/pr-gate.yml` (always-on required status check)
+- `.github/workflows/pr-automerge.yml` (optional label-driven auto-merge for stable branches)
+
+Push them to `dev` and merge to `main` via PR.
+
+### 8.3 Authenticate GitHub CLI
+
+```bash
+gh auth logout -h github.com -u <your-user>
+gh auth login -h github.com
+gh auth status
+```
+
+### 8.4 Apply branch protection
+
+Create payload:
+
+```bash
+cat > /tmp/branch-protection.json <<'JSON'
+{
+  "required_status_checks": {
+    "strict": true,
+    "contexts": ["pr-gate / pr-gate"]
+  },
+  "enforce_admins": true,
+  "required_pull_request_reviews": {
+    "dismiss_stale_reviews": true,
+    "require_code_owner_reviews": false,
+    "required_approving_review_count": 1,
+    "require_last_push_approval": true
+  },
+  "restrictions": null,
+  "required_linear_history": true,
+  "allow_force_pushes": false,
+  "allow_deletions": false,
+  "block_creations": false,
+  "required_conversation_resolution": true,
+  "lock_branch": false,
+  "allow_fork_syncing": true
+}
+JSON
+```
+
+Apply to both protected branches:
+
+```bash
+for BR in main master; do
+  gh api --method PUT \
+    -H "Accept: application/vnd.github+json" \
+    "/repos/<owner>/<repo>/branches/${BR}/protection" \
+    --input /tmp/branch-protection.json
+done
+```
+
+Remove protection from `dev` (direct pushes allowed):
+
+```bash
+gh api --method DELETE \
+  -H "Accept: application/vnd.github+json" \
+  "/repos/<owner>/<repo>/branches/dev/protection"
+```
+
+### 8.5 Verify protections
+
+```bash
+for BR in main master; do
+  gh api "/repos/<owner>/<repo>/branches/${BR}/protection"
+done
+```
+
+Verification must show:
+
+- required PR reviews (1 approval),
+- required status checks (`pr-gate / pr-gate`),
+- force push disabled,
+- deletion disabled,
+- admins enforced.
+- `dev` is not protected and allows direct push.
+## 9. Direct Push Policy
+
+Direct pushes are allowed to:
+
+- `dev`
+- `feature/*`
+- `fix/*`
+- `hotfix/*`
+
+Direct pushes are not allowed to:
+
+- `main`
+- `master`
+
+## 10. Relationship to Other Documents
 
 This document is authoritative for:
 
@@ -110,7 +235,7 @@ This document depends on:
 
 In case of conflict, security and authority documents take precedence.
 
-## 9. Change Management
+## 11. Change Management
 
 Changes to git workflow:
 
@@ -118,7 +243,7 @@ Changes to git workflow:
 - require ADR if they alter delivery governance materially,
 - must not weaken PR/testing controls.
 
-## 10. Document Status
+## 12. Document Status
 
 This document is DRAFT
 

@@ -147,6 +147,8 @@ commerce-platform-blueprint/
 │       ├── storefront.yml
 │       ├── magento.yml
 │       ├── control-plane.yml
+│       ├── pr-gate.yml
+│       ├── pr-automerge.yml
 │       └── shop-agent.yml
 │
 └── instances/
