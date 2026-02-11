@@ -49,6 +49,23 @@ This flow:
 - injects runtime-only values into local `.env` files (ignored by git),
 - installs and starts each requested store runtime slice.
 
+### Storefront Toggle Per Instance
+
+Each instance supports a one-flag storefront toggle in `instances/<store-id>/.env`:
+
+```bash
+STOREFRONT_ENABLED=1
+```
+
+- `1`: start decoupled storefront container (`http://localhost:<storefront-port>`)
+- `0`: do not run decoupled storefront; use Magento frontend only (`http://localhost:<magento-port>`)
+
+After changing the flag, rerun instance bootstrap/install for that store:
+
+```bash
+bash infra/scripts/install-magento.sh <store-id>
+```
+
 ## Installation and Validation (Local)
 
 Use this order for deterministic local setup:

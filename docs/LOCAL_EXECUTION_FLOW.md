@@ -344,6 +344,7 @@ Inject runtime values in `instances/shop-001/.env` for:
 
 - Magento source mode (`composer` or `git`) and corresponding source credentials/refs,
 - storefront runtime port/base-url values,
+- storefront runtime enable flag (`STOREFRONT_ENABLED=1` to enable, `0` to disable),
 - database/admin bootstrap values,
 - Shop Agent JWT values.
 
@@ -378,17 +379,29 @@ Runtime notes:
 
 ```bash
 curl -fsS http://localhost:8181
-curl -fsS http://localhost:8281
 curl -fsS http://localhost:8191/health
 ```
+
+If `STOREFRONT_ENABLED=1`:
+
+```bash
+curl -fsS http://localhost:8281
+```
+
+If `STOREFRONT_ENABLED=0`, skip storefront check and use Magento frontend only.
 
 Optional status code check:
 
 ```bash
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8181
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8281
 docker compose --env-file instances/shop-001/.env \
   -f instances/shop-001/docker-compose.override.yml ps
+```
+
+If `STOREFRONT_ENABLED=1`:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8281
 ```
 
 ### Step 5: Shutdown runtime
