@@ -97,6 +97,74 @@ query GetCart($cartId: String!) {
 }
 `;
 
+export const GET_CART_CHECKOUT_READINESS_QUERY = `
+query GetCartCheckoutReadiness($cartId: String!) {
+  cart(cart_id: $cartId) {
+    id
+    email
+    is_virtual
+    available_payment_methods {
+      code
+      title
+    }
+    shipping_addresses {
+      selected_shipping_method {
+        carrier_code
+        method_code
+      }
+      available_shipping_methods {
+        carrier_code
+        method_code
+        carrier_title
+        method_title
+        amount {
+          value
+          currency
+        }
+      }
+    }
+  }
+}
+`;
+
+export const SET_GUEST_EMAIL_ON_CART_MUTATION = `
+mutation SetGuestEmailOnCart($cartId: String!, $email: String!) {
+  setGuestEmailOnCart(input: { cart_id: $cartId, email: $email }) {
+    cart {
+      id
+      email
+    }
+  }
+}
+`;
+
+export const SET_PAYMENT_METHOD_ON_CART_MUTATION = `
+mutation SetPaymentMethodOnCart($cartId: String!, $paymentMethodCode: String!) {
+  setPaymentMethodOnCart(
+    input: {
+      cart_id: $cartId,
+      payment_method: {
+        code: $paymentMethodCode
+      }
+    }
+  ) {
+    cart {
+      id
+    }
+  }
+}
+`;
+
+export const PLACE_ORDER_MUTATION = `
+mutation PlaceOrder($cartId: String!) {
+  placeOrder(input: { cart_id: $cartId }) {
+    orderV2 {
+      number
+    }
+  }
+}
+`;
+
 export const GENERATE_CUSTOMER_TOKEN_MUTATION = `
 mutation GenerateCustomerToken($email: String!, $password: String!) {
   generateCustomerToken(email: $email, password: $password) {
