@@ -142,6 +142,7 @@ commerce-platform-blueprint/
 │   └── docker-compose.yml
 │
 ├── .github/
+│   ├── pull_request_template.md
 │   └── workflows/
 │       ├── storefront.yml
 │       ├── magento.yml

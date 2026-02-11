@@ -53,11 +53,14 @@ Every change must go through PR.
 PR requirements:
 
 - linked scope/intent in PR description,
-- clear change summary,
+- clear change summary with dedicated `What changed` section,
+- explicit rationale with dedicated `Why this change is needed` section,
 - test evidence for first-party code changes,
 - CI checks green.
 
 At least one reviewer approval is required before merge.
+
+Repository pull request template must be used to enforce consistent reviewer context.
 
 ## 5. Test Coverage Requirement
 
