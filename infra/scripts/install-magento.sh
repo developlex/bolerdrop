@@ -28,6 +28,11 @@ if [[ ! -f "${ENV_FILE}" ]]; then
   exit 1
 fi
 
+get_env_value() {
+  local key="$1"
+  grep -E "^${key}=" "${ENV_FILE}" | head -n1 | cut -d= -f2- || true
+}
+
 required_env=(
   STORE_ID
   MAGENTO_BASE_URL
@@ -47,7 +52,7 @@ required_env=(
 )
 
 for key in "${required_env[@]}"; do
-  value="$(grep -E "^${key}=" "${ENV_FILE}" | head -n1 | cut -d= -f2- || true)"
+  value="$(get_env_value "${key}")"
   if [[ -z "${value}" ]]; then
     echo "missing required key in ${ENV_FILE}: ${key}"
     exit 1
@@ -58,15 +63,25 @@ for key in "${required_env[@]}"; do
   fi
 done
 
-source_mode="$(grep -E '^MAGENTO_SOURCE_MODE=' "${ENV_FILE}" | head -n1 | cut -d= -f2-)"
+source_mode="$(get_env_value MAGENTO_SOURCE_MODE)"
 if [[ "${source_mode}" != "composer" && "${source_mode}" != "git" ]]; then
   echo "MAGENTO_SOURCE_MODE must be either 'composer' or 'git'"
   exit 1
 fi
 
+storefront_enabled="$(get_env_value STOREFRONT_ENABLED)"
+if [[ -z "${storefront_enabled}" ]]; then
+  storefront_enabled="1"
+fi
+
+if [[ "${storefront_enabled}" != "0" && "${storefront_enabled}" != "1" ]]; then
+  echo "STOREFRONT_ENABLED must be 0 or 1"
+  exit 1
+fi
+
 if [[ "${source_mode}" == "composer" ]]; then
   for key in MAGENTO_REPO_PUBLIC_KEY MAGENTO_REPO_PRIVATE_KEY; do
-    value="$(grep -E "^${key}=" "${ENV_FILE}" | head -n1 | cut -d= -f2- || true)"
+    value="$(get_env_value "${key}")"
     if [[ -z "${value}" || "${value}" == "__SET_AT_RUNTIME__" ]]; then
       echo "composer mode requires non-placeholder ${key}"
       exit 1
@@ -76,7 +91,7 @@ fi
 
 if [[ "${source_mode}" == "git" ]]; then
   for key in MAGENTO_GIT_REPOSITORY MAGENTO_GIT_REF; do
-    value="$(grep -E "^${key}=" "${ENV_FILE}" | head -n1 | cut -d= -f2- || true)"
+    value="$(get_env_value "${key}")"
     if [[ -z "${value}" || "${value}" == "__SET_AT_RUNTIME__" ]]; then
       echo "git mode requires non-placeholder ${key}"
       exit 1
@@ -85,13 +100,22 @@ if [[ "${source_mode}" == "git" ]]; then
 fi
 
 compose_cmd=(docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}")
+compose_services=(magento-db magento-search magento-cache magento-app magento-web magento-cron shop-agent)
 
-echo "starting ${STORE_ID} runtime containers"
-"${compose_cmd[@]}" up -d --build
+if [[ "${storefront_enabled}" == "1" ]]; then
+  compose_services+=(storefront)
+fi
+
+echo "starting ${STORE_ID} runtime containers (STOREFRONT_ENABLED=${storefront_enabled})"
+"${compose_cmd[@]}" up -d --build "${compose_services[@]}"
+
+if [[ "${storefront_enabled}" == "0" ]]; then
+  "${compose_cmd[@]}" rm -sf storefront >/dev/null 2>&1 || true
+fi
 
 echo "waiting for MySQL readiness"
 attempts=0
-until "${compose_cmd[@]}" exec -T magento-db mysqladmin ping -h 127.0.0.1 -u root -p"$(grep -E '^MYSQL_ROOT_PASSWORD=' "${ENV_FILE}" | cut -d= -f2-)" --silent >/dev/null 2>&1; do
+until "${compose_cmd[@]}" exec -T magento-db mysqladmin ping -h 127.0.0.1 -u root -p"$(get_env_value MYSQL_ROOT_PASSWORD)" --silent >/dev/null 2>&1; do
   attempts=$((attempts + 1))
   if (( attempts > 60 )); then
     echo "mysql did not become ready in time"
@@ -195,4 +219,8 @@ echo "warming generated code/cache"
 
 echo "installation complete for ${STORE_ID}"
 echo "Magento web URL should be available at MAGENTO_BASE_URL"
-echo "Decoupled storefront URL should be available at STOREFRONT_BASE_URL"
+if [[ "${storefront_enabled}" == "1" ]]; then
+  echo "Decoupled storefront URL should be available at STOREFRONT_BASE_URL"
+else
+  echo "Decoupled storefront runtime is disabled for this instance (STOREFRONT_ENABLED=0)"
+fi

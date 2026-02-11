@@ -214,6 +214,7 @@ MAGENTO_HTTP_PORT=${magento_port}
 SHOP_AGENT_PORT=${shop_agent_port}
 STOREFRONT_BASE_URL=http://localhost:${storefront_port}
 STOREFRONT_PORT=${storefront_port}
+STOREFRONT_ENABLED=1
 
 MAGENTO_SOURCE_MODE=git
 MAGENTO_PACKAGE=magento/project-community-edition
@@ -244,6 +245,40 @@ AGENT_JWT_AUDIENCE=${store_id}-audience
 AGENT_JWT_LEEWAY_SECONDS=5
 AGENT_JWT_MAX_TTL_SECONDS=900
 ENV
+}
+
+read_storefront_enabled() {
+  local env_file="$1"
+  local value
+  value="$(read_port_from_file "${env_file}" "STOREFRONT_ENABLED")"
+  if [[ -z "${value}" ]]; then
+    value="1"
+  fi
+  if [[ "${value}" != "0" && "${value}" != "1" ]]; then
+    echo "invalid STOREFRONT_ENABLED in ${env_file}; expected 0 or 1"
+    exit 1
+  fi
+  echo "${value}"
+}
+
+start_runtime_slice() {
+  local env_file="$1"
+  local compose_file="$2"
+  local storefront_enabled
+  storefront_enabled="$(read_storefront_enabled "${env_file}")"
+
+  local compose_cmd=(docker compose --env-file "${env_file}" -f "${compose_file}")
+  local services=(magento-db magento-search magento-cache magento-app magento-web magento-cron shop-agent)
+
+  if [[ "${storefront_enabled}" == "1" ]]; then
+    services+=(storefront)
+  fi
+
+  "${compose_cmd[@]}" up -d --build "${services[@]}"
+
+  if [[ "${storefront_enabled}" == "0" ]]; then
+    "${compose_cmd[@]}" rm -sf storefront >/dev/null 2>&1 || true
+  fi
 }
 
 collect_used_ports_from_existing_envs
@@ -323,6 +358,9 @@ for (( offset=0; offset<COUNT; offset++ )); do
     if ! grep -Eq '^STOREFRONT_BASE_URL=' "${env_file}"; then
       printf 'STOREFRONT_BASE_URL=http://localhost:%s\n' "${storefront_port}" >> "${env_file}"
     fi
+    if ! grep -Eq '^STOREFRONT_ENABLED=' "${env_file}"; then
+      printf 'STOREFRONT_ENABLED=1\n' >> "${env_file}"
+    fi
   fi
 
   if (( PROVISION_ONLY == 1 )); then
@@ -335,7 +373,7 @@ for (( offset=0; offset<COUNT; offset++ )); do
     bash "${INSTALL_SCRIPT}" "${store_id}"
   else
     echo "start runtime only ${store_id}"
-    docker compose --env-file "${env_file}" -f "${compose_file}" up -d --build
+    start_runtime_slice "${env_file}" "${compose_file}"
   fi
 
 done
