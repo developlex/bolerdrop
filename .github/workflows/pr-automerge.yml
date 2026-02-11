@@ -21,7 +21,7 @@ jobs:
   automerge:
     runs-on: ubuntu-latest
     steps:
-      - name: Auto-merge approved, green PRs to stable branches
+      - name: Enable auto-merge for labeled PRs targeting stable branches
         uses: actions/github-script@v7
         with:
           script: |
@@ -36,6 +36,11 @@ jobs:
             }
             if (!pr) {
               core.info('No PR context available.');
+              return;
+            }
+
+            if (pr.state && pr.state !== 'open') {
+              core.info(`PR state is ${pr.state}; skipping.`);
               return;
             }
 
@@ -62,17 +67,8 @@ jobs:
                   pullRequest(number: $number) {
                     id
                     number
-                    reviewDecision
-                    mergeable
-                    mergeStateStatus
-                    commits(last: 1) {
-                      nodes {
-                        commit {
-                          statusCheckRollup {
-                            state
-                          }
-                        }
-                      }
+                    autoMergeRequest {
+                      enabledAt
                     }
                   }
                 }
@@ -85,22 +81,9 @@ jobs:
               number: pr.number
             });
             const prNode = result.repository.pullRequest;
-            const rollup = prNode.commits.nodes[0]?.commit?.statusCheckRollup?.state || 'PENDING';
 
-            if (prNode.reviewDecision !== 'APPROVED') {
-              core.info(`Review decision is ${prNode.reviewDecision}, not APPROVED.`);
-              return;
-            }
-            if (rollup !== 'SUCCESS') {
-              core.info(`Status rollup is ${rollup}, not SUCCESS.`);
-              return;
-            }
-            if (!['MERGEABLE'].includes(prNode.mergeable)) {
-              core.info(`PR mergeable state is ${prNode.mergeable}.`);
-              return;
-            }
-            if (!['CLEAN', 'HAS_HOOKS', 'UNSTABLE'].includes(prNode.mergeStateStatus)) {
-              core.info(`PR mergeStateStatus is ${prNode.mergeStateStatus}.`);
+            if (prNode.autoMergeRequest) {
+              core.info(`Auto-merge already enabled for PR #${pr.number}.`);
               return;
             }
 
