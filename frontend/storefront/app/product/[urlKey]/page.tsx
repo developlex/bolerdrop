@@ -2,16 +2,44 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { addToCartAction } from "@/app/actions/cart";
 import { getProductByUrlKey } from "@/src/lib/commerce/catalog";
+import { absoluteStorefrontUrl, toMetaDescription } from "@/src/lib/seo";
 import { ui } from "@/src/ui/styles";
 
 export async function generateMetadata({ params }: { params: { urlKey: string } }): Promise<Metadata> {
   const product = await getProductByUrlKey(params.urlKey);
   if (!product) {
-    return { title: "Product not found" };
+    return {
+      title: "Product not found",
+      robots: {
+        index: false,
+        follow: false
+      }
+    };
   }
+
+  const canonicalPath = `/product/${encodeURIComponent(product.urlKey)}`;
+  const description = toMetaDescription(product.shortDescriptionHtml) ?? toMetaDescription(product.descriptionHtml);
+
   return {
-    title: product.name,
-    description: product.shortDescriptionHtml ? undefined : `Buy ${product.name} from BoilerDrop storefront`
+    title: `${product.name} | BoilerDrop Storefront`,
+    description,
+    alternates: {
+      canonical: canonicalPath
+    },
+    openGraph: {
+      title: product.name,
+      description,
+      url: canonicalPath,
+      images: product.imageUrl
+        ? [{ url: absoluteStorefrontUrl(product.imageUrl) }]
+        : undefined
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: product.name,
+      description,
+      images: product.imageUrl ? [absoluteStorefrontUrl(product.imageUrl)] : undefined
+    }
   };
 }
 
@@ -22,8 +50,32 @@ export default async function ProductPage({ params }: { params: { urlKey: string
     notFound();
   }
 
+  const productCanonicalPath = `/product/${encodeURIComponent(product.urlKey)}`;
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    sku: product.sku,
+    url: absoluteStorefrontUrl(productCanonicalPath),
+    image: product.imageUrl ? [absoluteStorefrontUrl(product.imageUrl)] : undefined,
+    description: toMetaDescription(product.descriptionHtml) ?? undefined,
+    offers: product.price !== null && product.currency
+      ? {
+          "@type": "Offer",
+          priceCurrency: product.currency,
+          price: product.price.toFixed(2),
+          availability: "https://schema.org/InStock",
+          url: absoluteStorefrontUrl(productCanonicalPath)
+        }
+      : undefined
+  };
+
   return (
     <article className={ui.grid.product}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+      />
       <div className={ui.surface.media}>
         {product.imageUrl ? (
           <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />

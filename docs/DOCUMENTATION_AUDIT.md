@@ -42,7 +42,7 @@ It is used to:
 | `docs/STORE_FRONTEND_UX.md` | DRAFT | 90% | Conceptual storefront UX journeys, surfaces, and customer interaction boundaries are now defined. |
 | `docs/ADMIN_UX.md` | DRAFT | 90% | Conceptual store-admin workflows, boundaries, and separation from platform operations are now defined. |
 | `docs/PRODUCT_MODEL.md` | DRAFT | 90% | Conceptual product/variant/pricing/inventory model and boundaries are now explicitly defined. |
-| `docs/FRONTEND_ARCHITECTURE.md` | DRAFT | 95% | Frontend boundaries now include enforced style-contract rules and CI-backed standards gates (`no any`, React 19 API profile constraints). |
+| `docs/FRONTEND_ARCHITECTURE.md` | DRAFT | 96% | Frontend boundaries now include canonical pagination URL rules (`/page/<n>`), permanent alias redirects, and explicit SEO verification linkage to LOCAL_EXECUTION_FLOW. |
 | `docs/GRAPHQL_CONTRACTS.md` | DRAFT | 91% | GraphQL boundary categories, isolation/security exposure rules, and mutation constraints are now contractually defined. |
 | `docs/CONTROL_PLANE_OVERVIEW.md` | DRAFT | 90% | Conceptual/structural Control Plane boundaries, interaction model, and non-responsibilities are now explicitly defined. |
 | `docs/SHOP_AGENT_API.md` | DRAFT | 93% | Contractual Shop Agent API now includes documented implemented auth profile (protected endpoints with signed short-lived token validation). |
@@ -54,7 +54,7 @@ It is used to:
 | `docs/OBSERVABILITY_MODEL.md` | DRAFT | 91% | Required health/log/metric/trace/audit signals and platform-vs-store visibility boundaries are now defined. |
 | `docs/IMPLEMENTATION_ROADMAP.md` | DRAFT | 92% | Roadmap now includes concrete Phase 3 immediate execution checklist in addition to phase sequencing and milestones. |
 | `docs/TECH_DEBT.md` | DRAFT | 90% | Technical debt register established with prioritized bootstrap/security/isolation follow-up items. |
-| `docs/LOCAL_EXECUTION_FLOW.md` | DRAFT | 97% | Local/CI execution steps now include Python 3.14 standards/lint/type gates for Control Plane and Shop Agent plus storefront standards gate flow. |
+| `docs/LOCAL_EXECUTION_FLOW.md` | DRAFT | 98% | Execution steps now include storefront technical-SEO verification flow (canonical pagination redirects, robots/sitemap checks, and product metadata/schema validation) in addition to existing quality gates. |
 | `docs/RUNBOOK.md` | DRAFT | 89% | Operational contract now defines incident categories, response boundaries, and prohibited operator actions. |
 | `docs/SECURITY_MODEL.md` | DRAFT | 89% | Contractual trust boundaries, threat model, and security control relationships are now defined. |
 | `docs/SECURITY_THREAT_MODEL.md` | DRAFT | 91% | Platform-wide threat classes and required mitigations now align with PCI/OWASP baseline and component boundaries. |

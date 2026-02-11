@@ -97,6 +97,21 @@ Routing semantics are informed by:
 
 `STORE_FRONTEND_UX.md`
 
+### 5.1 Canonical URL Rules (Technical SEO Boundary)
+
+For indexable catalog surfaces, routing must enforce canonical URL shape.
+
+Rules:
+
+- pagination canonical path uses `/page/<n>` for `n > 1`,
+- root catalog canonical path is `/` (not `/page/1`),
+- query-based pagination aliases (for example `?page=<n>`) must redirect permanently to canonical path routes,
+- canonical metadata tags must match canonical route shape.
+
+Technical SEO verification commands are documented in:
+
+`LOCAL_EXECUTION_FLOW.md`
+
 ## 6. Presentation Layer
 
 The presentation layer:
