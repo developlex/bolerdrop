@@ -165,8 +165,13 @@ The following rules are mandatory:
 - flaky tests are treated as failures.
 - first-party production code changes must not be merged without test additions/updates.
 - vendor/third-party code imports are excluded from author-owned test obligations.
+- static standards checks (typed contracts / banned anti-pattern gates) must pass before test execution.
 
 Manual testing does not satisfy completion criteria.
+
+Current command-level test execution order is documented in:
+
+- `LOCAL_EXECUTION_FLOW.md`
 
 ## 11. Failure Handling
 

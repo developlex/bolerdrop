@@ -2,7 +2,7 @@
 
 Status: DRAFT
 Type: Operations / Execution Procedure
-Scope: Local and CI command execution order for Control Plane and Shop Agent slices
+Scope: Local and CI command execution order for Control Plane, Shop Agent, Storefront, and store runtime slices
 Freeze: Not applied
 
 ## 1. Purpose
@@ -20,19 +20,33 @@ bash -n infra/scripts/health-check.sh
 bash -n infra/scripts/reset-instance.sh
 ```
 
-### Step 2: Validate API Python syntax
+### Step 2: Install Python quality tools (once per environment)
+
+```bash
+python3 -m pip install --upgrade pip ruff mypy
+```
+
+### Step 3: Run Python standards and static checks
+
+```bash
+python3 infra/scripts/python-standards-check.py control-plane/api/src
+ruff check control-plane/api/src infra/scripts/python-standards-check.py
+mypy --python-version 3.14 control-plane/api/src/server.py infra/scripts/python-standards-check.py
+```
+
+### Step 4: Validate API Python syntax
 
 ```bash
 python3 -m py_compile control-plane/api/src/server.py
 ```
 
-### Step 3: Validate compose configuration
+### Step 5: Validate compose configuration
 
 ```bash
 docker compose -f control-plane/docker-compose.yml config
 ```
 
-### Step 4: Start control plane runtime
+### Step 6: Start control plane runtime
 
 ```bash
 make cp-up
@@ -44,7 +58,7 @@ Equivalent:
 docker compose -f control-plane/docker-compose.yml up -d --build
 ```
 
-### Step 5: Run health checks
+### Step 7: Run health checks
 
 ```bash
 make cp-health
@@ -58,13 +72,13 @@ curl -fsS http://localhost:8088/health
 curl -fsS http://localhost:8088/status
 ```
 
-### Step 6: Optional runtime logs
+### Step 8: Optional runtime logs
 
 ```bash
 make cp-logs
 ```
 
-### Step 7: Shutdown
+### Step 9: Shutdown
 
 ```bash
 make cp-down
@@ -81,34 +95,53 @@ docker compose -f control-plane/docker-compose.yml down --remove-orphans
 The workflow in `.github/workflows/control-plane.yml` executes in this order:
 
 1. Checkout repository
-2. Validate compose config
-3. Build and start containers
-4. Wait until `/health` is reachable
-5. Run `infra/scripts/health-check.sh`
-6. Dump logs on failure
-7. Shutdown containers
+2. Setup Python 3.14
+3. Install Python quality tools
+4. Run Python standards gate (`python-standards-check.py`)
+5. Run `ruff` static checks
+6. Run `mypy` static type checks (first-party sources)
+7. Validate compose config
+8. Build and start containers
+9. Wait until `/health` is reachable
+10. Run `infra/scripts/health-check.sh`
+11. Dump logs on failure
+12. Shutdown containers
 
 ## 4. Local Execution Order (Shop Agent)
 
-### Step 1: Validate Python syntax
+### Step 1: Install Python quality tools (once per environment)
+
+```bash
+python3 -m pip install --upgrade pip ruff mypy
+```
+
+### Step 2: Run Python standards and static checks
+
+```bash
+python3 infra/scripts/python-standards-check.py backend/shop-agent/src backend/shop-agent/tests
+ruff check backend/shop-agent/src backend/shop-agent/tests infra/scripts/python-standards-check.py
+mypy --python-version 3.14 backend/shop-agent/src/server.py
+```
+
+### Step 3: Validate Python syntax
 
 ```bash
 python3 -m py_compile backend/shop-agent/src/server.py
 ```
 
-### Step 2: Run automated tests
+### Step 4: Run automated tests
 
 ```bash
 python3 -m unittest discover -s backend/shop-agent/tests -p "test_*.py"
 ```
 
-### Step 3: Build container image
+### Step 5: Build container image
 
 ```bash
 docker build -t shop-agent:test backend/shop-agent
 ```
 
-### Step 4: Start runtime with injected auth config
+### Step 6: Start runtime with injected auth config
 
 ```bash
 docker run -d --rm \
@@ -126,7 +159,7 @@ docker run -d --rm \
   shop-agent:test
 ```
 
-### Step 5: Run endpoint checks
+### Step 7: Run endpoint checks
 
 ```bash
 curl -fsS http://localhost:8091/health
@@ -134,7 +167,7 @@ curl -fsS -H "Authorization: Bearer <signed-jwt>" http://localhost:8091/status
 curl -fsS -X POST -H "Authorization: Bearer <signed-jwt>" http://localhost:8091/verify/smoke
 ```
 
-### Step 6: Shutdown runtime
+### Step 8: Shutdown runtime
 
 ```bash
 docker rm -f shop-agent-local
@@ -145,17 +178,73 @@ docker rm -f shop-agent-local
 The workflow in `.github/workflows/shop-agent.yml` executes in this order:
 
 1. Checkout repository
-2. Validate Python syntax
-3. Run unit tests
-4. Build container image
-5. Start container with injected runtime auth config
-6. Wait for `/health`
-7. Generate signed short-lived token in workflow context
-8. Verify `/status` and `/verify/smoke` with authorized calls
-9. Dump logs on failure
-10. Shutdown container
+2. Setup Python 3.14
+3. Install Python quality tools
+4. Run Python standards gate (`python-standards-check.py`)
+5. Run `ruff` static checks
+6. Run `mypy` static type checks (first-party sources)
+7. Validate Python syntax
+8. Run unit tests
+9. Build container image
+10. Start container with injected runtime auth config
+11. Wait for `/health`
+12. Generate signed short-lived token in workflow context
+13. Verify `/status` and `/verify/smoke` with authorized calls
+14. Dump logs on failure
+15. Shutdown container
 
-## 6. Local Execution Order (Automated Multi-Store Bootstrap)
+## 6. Local Execution Order (Storefront)
+
+### Step 1: Install dependencies
+
+```bash
+cd frontend/storefront
+npm ci
+```
+
+### Step 2: Validate dependency freshness (recommended before release)
+
+```bash
+npm outdated
+```
+
+### Step 3: Run standards checks, tests, type checks, and production build
+
+```bash
+npm run check:standards
+npm run test
+npm run typecheck
+npm run build
+```
+
+### Step 4: Build runtime image
+
+```bash
+docker build -t storefront:test frontend/storefront
+```
+
+### Step 5: Verify storefront runtime endpoint
+
+```bash
+docker run --rm -p 8281:3000 \
+  -e COMMERCE_GRAPHQL_URL=http://localhost:8181/graphql \
+  -e STOREFRONT_BASE_URL=http://localhost:8281 \
+  -e HOSTNAME=0.0.0.0 \
+  storefront:test
+```
+
+In a separate terminal:
+
+```bash
+curl -fsS http://localhost:8281
+curl -fsS http://localhost:8281/api/health
+```
+
+### Step 6: Stop local storefront runtime
+
+Use `Ctrl+C` in the foreground `docker run` terminal.
+
+## 7. Local Execution Order (Automated Multi-Store Bootstrap)
 
 ### Step 1: Provision-only dry run (non-destructive)
 
@@ -199,7 +288,7 @@ make platform-bootstrap INSTANCES=<instance-count> NO_INSTALL=1
 make platform-bootstrap INSTANCES=<instance-count> NO_CONTROL_PLANE=1
 ```
 
-## 7. Local Execution Order (Single Store Manual Path)
+## 8. Local Execution Order (Single Store Manual Path)
 
 ### Step 1: Prepare runtime env file
 
@@ -210,6 +299,7 @@ cp instances/shop-001/.env.example instances/shop-001/.env
 Inject runtime values in `instances/shop-001/.env` for:
 
 - Magento source mode (`composer` or `git`) and corresponding source credentials/refs,
+- storefront runtime port/base-url values,
 - database/admin bootstrap values,
 - Shop Agent JWT values.
 
@@ -240,10 +330,11 @@ Runtime notes:
 - `magento-cron` runs `bin/magento cron:run` every minute inside the stack.
 - This is the containerized equivalent of Adobe's crontab guidance for Magento.
 
-### Step 4: Verify storefront and agent
+### Step 4: Verify Magento, storefront, and agent
 
 ```bash
 curl -fsS http://localhost:8181
+curl -fsS http://localhost:8281
 curl -fsS http://localhost:8191/health
 ```
 
@@ -251,6 +342,7 @@ Optional status code check:
 
 ```bash
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8181
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8281
 docker compose --env-file instances/shop-001/.env \
   -f instances/shop-001/docker-compose.override.yml ps
 ```
@@ -262,14 +354,61 @@ docker compose --env-file instances/shop-001/.env \
   -f instances/shop-001/docker-compose.override.yml down --remove-orphans
 ```
 
-## 8. Notes
+## 9. Local Execution Order (Storefront Dependency Upgrade Path)
+
+Use this sequence whenever frontend dependencies are upgraded.
+
+### Step 1: Update dependency definitions
+
+Edit `frontend/storefront/package.json` to target selected versions.
+
+### Step 2: Regenerate lock file and install
+
+```bash
+cd frontend/storefront
+npm install
+```
+
+### Step 3: Validate quality gates
+
+```bash
+npm run check:standards
+npm run test
+npm run typecheck
+npm run build
+```
+
+### Step 4: Rebuild integrated runtime service
+
+```bash
+docker compose --env-file instances/shop-001/.env \
+  -f instances/shop-001/docker-compose.override.yml up -d --build storefront
+```
+
+### Step 5: Verify runtime behavior and health state
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8281
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8281/api/health
+docker compose --env-file instances/shop-001/.env \
+  -f instances/shop-001/docker-compose.override.yml ps storefront
+```
+
+Expected outcome:
+
+- storefront root returns `200`,
+- `/api/health` returns `200`,
+- container status reports `healthy`.
+
+## 10. Notes
 
 - Docker daemon must be running locally before startup commands.
 - Health gate is considered passing only when both `/health` and `/status` checks succeed.
 - Runtime credential/config values are never stored in repository files.
 - Use placeholders in local command history/examples; inject real values at runtime only.
+- For JavaScript runtimes, use current LTS profile by default unless a contract document states otherwise.
 
-## 9. Relationship to Other Documents
+## 11. Relationship to Other Documents
 
 This document depends on:
 
@@ -280,7 +419,7 @@ This document depends on:
 
 In case of conflict, contractual docs take precedence.
 
-## 10. Document Status
+## 12. Document Status
 
 This document is DRAFT
 

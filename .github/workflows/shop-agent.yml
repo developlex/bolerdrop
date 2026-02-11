@@ -18,6 +18,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install Python quality tools
+        run: python3 -m pip install --upgrade pip ruff mypy
+
+      - name: Run Python standards check
+        run: python3 infra/scripts/python-standards-check.py backend/shop-agent/src backend/shop-agent/tests
+
+      - name: Run Ruff
+        run: ruff check backend/shop-agent/src backend/shop-agent/tests infra/scripts/python-standards-check.py
+
+      - name: Run mypy
+        run: mypy --python-version 3.14 backend/shop-agent/src/server.py
+
       - name: Validate Python syntax
         run: python3 -m py_compile backend/shop-agent/src/server.py
 
