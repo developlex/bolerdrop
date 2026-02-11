@@ -82,6 +82,7 @@ A deployment is considered Done only if:
 - no manual runtime changes were performed
 - post-deploy smoke tests passed
 - deployment status is visible to operators
+- first-party code changes included and passed required automated tests
 
 Manual fixes invalidate the deployment.
 

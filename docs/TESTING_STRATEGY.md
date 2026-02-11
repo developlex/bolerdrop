@@ -31,6 +31,7 @@ Core principles:
 - earlier tests are cheaper and faster,
 - later tests are fewer but higher confidence,
 - no single test layer is sufficient on its own.
+- first-party code changes require corresponding automated tests.
 
 ## 3. Testing Layers Overview
 
@@ -162,6 +163,8 @@ The following rules are mandatory:
 - tests must be repeatable,
 - tests must be deterministic,
 - flaky tests are treated as failures.
+- first-party production code changes must not be merged without test additions/updates.
+- vendor/third-party code imports are excluded from author-owned test obligations.
 
 Manual testing does not satisfy completion criteria.
 

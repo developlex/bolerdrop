@@ -36,6 +36,7 @@ commerce-platform-blueprint/
 │   ├── ARCHITECTURE_DECISIONS.md
 │   ├── PROJECT_STRUCTURE.md
 │   ├── DOCUMENTATION_AUDIT.md
+│   ├── GIT_WORKFLOW.md
 │   │
 │   ├── ISOLATION_MODES.md
 │   ├── CONTROL_PLANE_AUTHORITY.md

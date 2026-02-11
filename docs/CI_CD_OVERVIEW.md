@@ -83,6 +83,11 @@ CI responsibilities include:
 
 CI must fail fast on contract violations.
 
+For first-party code changes, CI must enforce:
+
+- required automated tests are present and executed,
+- pull-request checks pass before merge to protected branches.
+
 ## 6. CD Phase (Deployment)
 
 The CD phase is responsible for:
@@ -188,6 +193,7 @@ This document depends on:
 - `PROJECT_STRUCTURE.md`
 - `DEFINITION_OF_DONE.md`
 - `SECRETS_MANAGEMENT.md`
+- `GIT_WORKFLOW.md`
 
 In case of conflict, this document overrides implementation.
 
