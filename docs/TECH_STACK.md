@@ -60,11 +60,12 @@ Infrastructure code is declarative and contains no business logic.
 Used to implement store business logic.
 
 - Adobe Commerce (Magento)
-- PHP runtime
+- PHP runtime (PHP-FPM model)
+- Web tier: Apache 2.4.x or Nginx (deployment-profile specific)
 - Composer-based dependency management
-- Relational database (engine unspecified)
-- Cache layer (engine unspecified)
-- Search/indexing layer (engine unspecified)
+- Relational database (MySQL 8.0 / MariaDB compatible profile)
+- Cache layer (Redis/Valkey compatible profile)
+- Search/indexing layer (OpenSearch-compatible profile)
 
 Backend extensions are implemented as modular components.
 

@@ -29,6 +29,11 @@ Related security contracts:
 - `docs/CONTROL_PLANE_AUTHORITY.md`
 - `docs/SHOP_AGENT_API.md`
 
+## Commerce Runtime Notes
+
+- Magento runtime is PHP-based and requires a web tier profile (`Apache` or `Nginx`) plus supporting services.
+- Extension/plugin baseline and low-custom-code decisions are tracked in `docs/MAGENTO_PLUGIN_STRATEGY.md`.
+
 ## Documentation Authority
 
 The root governance and precedence rules are defined in:

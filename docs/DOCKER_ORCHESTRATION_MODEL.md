@@ -104,7 +104,8 @@ Each store instance is orchestrated as a self-contained runtime group.
 
 A store instance includes:
 
-- commerce backend runtime,
+- commerce backend runtime (PHP-FPM application tier),
+- web tier runtime (Apache or Nginx profile),
 - cache/search components (as applicable),
 - Shop Agent,
 - store-local networking.

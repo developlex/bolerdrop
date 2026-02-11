@@ -57,6 +57,15 @@ Before installation begins, the following must be true:
 
 Environment prerequisites are conceptual, not tool-specific.
 
+For Magento runtime compatibility (conceptual baseline):
+
+- PHP runtime profile must satisfy the selected Magento 2.4.x line,
+- web server profile must be explicitly selected (Apache 2.4.x or Nginx),
+- search backend profile must be selected (OpenSearch-compatible),
+- database/cache profiles must be selected before first store provisioning.
+
+Installation documentation must not assume Apache-only topology.
+
 ## 5. Installation Phases (High-Level)
 
 Installation is divided into explicit phases.

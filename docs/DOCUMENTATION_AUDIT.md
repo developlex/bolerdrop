@@ -59,13 +59,14 @@ It is used to:
 | `docs/TESTING_STRATEGY.md` | DRAFT | 90% | Contractual layered test strategy now defines ownership, boundaries, and mandatory execution rules. |
 | `docs/SMOKE_TESTS.md` | DRAFT | 90% | Contractual smoke gate now defines required checks, pass/fail rules, rollback coupling, and traceability. |
 | `docs/TECH_STACK.md` | DRAFT | 90% | Platform technology inventory now defines stack domains, boundaries, and introduction rules. |
+| `docs/MAGENTO_PLUGIN_STRATEGY.md` | DRAFT | 90% | Magento extension baseline now documents low-custom-code plugin choices and compatibility guardrails. |
 | `docs/adr/README.md` | DRAFT | 92% | ADR governance is now fully defined with scope triggers, lifecycle, mandatory template, and supersession rules. |
 | `docs/adr/0001-record-architecture-decisions.md` | ACCEPTED | 66% | Initial ADR exists; more ADRs needed over time. |
 
 ## 4. Overall Score
 
 - Current overall documentation completeness: **90%**
-- Documents with non-zero completeness: **34 / 34**
+- Documents with non-zero completeness: **35 / 35**
 - Highest-priority gaps: none
 - Cross-reference gaps to close: none currently detected among completed core governance docs
 

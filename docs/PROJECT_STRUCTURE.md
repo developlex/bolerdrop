@@ -70,6 +70,7 @@ commerce-platform-blueprint/
 │   ├── GRAPHQL_CONTRACTS.md
 │   ├── CONTROL_PLANE_OVERVIEW.md
 │   ├── SHOP_AGENT_API.md
+│   ├── MAGENTO_PLUGIN_STRATEGY.md
 │   │
 │   └── adr/
 │       ├── README.md
