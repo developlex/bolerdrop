@@ -41,3 +41,7 @@ The root governance and precedence rules are defined in:
 - `AGENT.md`
 
 If documentation and implementation diverge, higher-authority documentation governs.
+
+Delivery workflow and branch/PR policy are defined in:
+
+- `docs/GIT_WORKFLOW.md`
