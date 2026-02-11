@@ -39,7 +39,7 @@ jobs:
               return;
             }
 
-            if (pr.state && pr.state !== 'open') {
+            if ((pr.state || 'open').toLowerCase() !== 'open') {
               core.info(`PR state is ${pr.state}; skipping.`);
               return;
             }
