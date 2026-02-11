@@ -142,10 +142,14 @@ commerce-platform-blueprint/
 │   └── docker-compose.yml
 │
 ├── .github/
+│   ├── CODEOWNERS
+│   ├── pull_request_template.md
 │   └── workflows/
 │       ├── storefront.yml
 │       ├── magento.yml
 │       ├── control-plane.yml
+│       ├── pr-gate.yml
+│       ├── pr-automerge.yml
 │       └── shop-agent.yml
 │
 └── instances/

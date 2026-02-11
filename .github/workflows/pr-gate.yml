@@ -1,0 +1,22 @@
+name: pr-gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - dev
+      - main
+
+jobs:
+  pr-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Basic repository gate
+        run: |
+          test -f AGENT.md
+          test -f README.md
+          test -d docs
+          echo "pr-gate passed"

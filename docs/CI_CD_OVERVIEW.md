@@ -87,6 +87,7 @@ For first-party code changes, CI must enforce:
 
 - required automated tests are present and executed,
 - pull-request checks pass before merge to protected branches.
+- pull request description includes explicit `What changed` and `Why` sections.
 
 ## 6. CD Phase (Deployment)
 

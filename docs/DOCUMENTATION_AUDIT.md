@@ -3,7 +3,7 @@
 Status: ACTIVE  
 Type: Documentation coverage audit  
 Scope: All files under `/docs`  
-Last updated: 2026-02-10
+Last updated: 2026-02-11
 
 ## 1. Purpose
 
@@ -30,7 +30,7 @@ It is used to:
 | `docs/PROJECT_VISION.md` | DRAFT | 78% | Strong business framing; can add measurable business KPIs. |
 | `docs/ARCHITECTURE_DECISIONS.md` | DRAFT | 82% | Core invariants defined; references added. |
 | `docs/PROJECT_STRUCTURE.md` | DRAFT | 90% | Updated structure map and authority precedence now align with current repo layout and governance boundaries. |
-| `docs/GIT_WORKFLOW.md` | DRAFT | 91% | Branch model (`master`/`dev`/`feature/*`) and mandatory PR + protected-branch rules are now explicitly defined. |
+| `docs/GIT_WORKFLOW.md` | DRAFT | 96% | Branch model (`main`/`master` stable + `dev` working), direct-push policy, code-owner review requirement, reproducible branch-protection steps, and optional auto-merge flow are explicitly defined. |
 | `docs/DOCUMENTATION_AUDIT.md` | ACTIVE | 70% | Baseline audit in place; update each doc sprint. |
 | `docs/ISOLATION_MODES.md` | DRAFT | 88% | Comprehensive mode model, invariants, blast radius, and open questions. |
 | `docs/CONTROL_PLANE_AUTHORITY.md` | DRAFT | 90% | Contractual authority model is explicit, exhaustive, and cross-referenced. |

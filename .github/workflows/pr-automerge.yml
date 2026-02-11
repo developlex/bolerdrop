@@ -1,0 +1,119 @@
+name: pr-automerge
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+      - labeled
+      - unlabeled
+  pull_request_review:
+    types:
+      - submitted
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto-merge approved, green PRs to stable branches
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            let pr = context.payload.pull_request;
+            if (!pr && context.payload.review && context.payload.review.pull_request_url) {
+              const prNum = Number(context.payload.review.pull_request_url.split('/').pop());
+              const { data } = await github.rest.pulls.get({ owner, repo, pull_number: prNum });
+              pr = data;
+            }
+            if (!pr) {
+              core.info('No PR context available.');
+              return;
+            }
+
+            const base = pr.base.ref;
+            if (!['main', 'master'].includes(base)) {
+              core.info(`PR base ${base} is not a stable branch, skipping.`);
+              return;
+            }
+
+            const labels = (pr.labels || []).map(l => l.name);
+            if (!labels.includes('automerge')) {
+              core.info('Label "automerge" not set; skipping.');
+              return;
+            }
+
+            if (pr.draft) {
+              core.info('Draft PR; skipping.');
+              return;
+            }
+
+            const query = `
+              query($owner: String!, $repo: String!, $number: Int!) {
+                repository(owner: $owner, name: $repo) {
+                  pullRequest(number: $number) {
+                    id
+                    number
+                    reviewDecision
+                    mergeable
+                    mergeStateStatus
+                    commits(last: 1) {
+                      nodes {
+                        commit {
+                          statusCheckRollup {
+                            state
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+
+            const result = await github.graphql(query, {
+              owner,
+              repo,
+              number: pr.number
+            });
+            const prNode = result.repository.pullRequest;
+            const rollup = prNode.commits.nodes[0]?.commit?.statusCheckRollup?.state || 'PENDING';
+
+            if (prNode.reviewDecision !== 'APPROVED') {
+              core.info(`Review decision is ${prNode.reviewDecision}, not APPROVED.`);
+              return;
+            }
+            if (rollup !== 'SUCCESS') {
+              core.info(`Status rollup is ${rollup}, not SUCCESS.`);
+              return;
+            }
+            if (!['MERGEABLE'].includes(prNode.mergeable)) {
+              core.info(`PR mergeable state is ${prNode.mergeable}.`);
+              return;
+            }
+            if (!['CLEAN', 'HAS_HOOKS', 'UNSTABLE'].includes(prNode.mergeStateStatus)) {
+              core.info(`PR mergeStateStatus is ${prNode.mergeStateStatus}.`);
+              return;
+            }
+
+            const mergeMutation = `
+              mutation($pullRequestId: ID!) {
+                enablePullRequestAutoMerge(input: {
+                  pullRequestId: $pullRequestId,
+                  mergeMethod: SQUASH
+                }) {
+                  pullRequest { number }
+                }
+              }
+            `;
+
+            await github.graphql(mergeMutation, { pullRequestId: prNode.id });
+            core.info(`Enabled auto-merge for PR #${pr.number}.`);
