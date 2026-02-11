@@ -60,7 +60,7 @@ PR requirements:
 - explicit rationale with dedicated `Why this change is needed` section,
 - test evidence for first-party code changes,
 - CI checks green.
-- repository-owner `APPROVED` review gate check must pass on protected branches.
+- at least one approval from an eligible invited reviewer on protected branches.
 
 Repository pull request template must be used to enforce consistent reviewer context.
 
@@ -128,7 +128,6 @@ Required files:
 
 - `.github/pull_request_template.md` (includes `What changed` and `Why this change is needed`)
 - `.github/workflows/pr-gate.yml` (always-on required status check)
-- `.github/workflows/owner-approval-gate.yml` (requires repository-owner `APPROVED` review)
 - `.github/workflows/pr-automerge.yml` (optional label-driven auto-merge for stable branches)
 
 Push them to `dev` and merge to `main` via PR.
@@ -150,16 +149,13 @@ cat > /tmp/branch-protection.json <<'JSON'
 {
   "required_status_checks": {
     "strict": true,
-    "contexts": [
-      "pr-gate / pr-gate",
-      "owner-approval-gate / owner-approval-gate"
-    ]
+    "contexts": ["pr-gate / pr-gate"]
   },
   "enforce_admins": true,
   "required_pull_request_reviews": {
     "dismiss_stale_reviews": true,
     "require_code_owner_reviews": false,
-    "required_approving_review_count": 0,
+    "required_approving_review_count": 1,
     "require_last_push_approval": false
   },
   "restrictions": null,
@@ -204,7 +200,7 @@ done
 Verification must show:
 
 - required status checks (`pr-gate / pr-gate`),
-- required status checks (`owner-approval-gate / owner-approval-gate`),
+- required PR reviews (1 approval),
 - force push disabled,
 - deletion disabled,
 - admins enforced.
