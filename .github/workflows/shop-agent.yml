@@ -35,7 +35,12 @@ jobs:
             -e STORE_ID=shop-001 \
             -e SHOP_AGENT_VERSION=0.1.0 \
             -e DEPLOYMENT_VERSION=ci \
-            -e AGENT_AUTH_TOKEN=test-token \
+            -e AGENT_AUTH_MODE=jwt \
+            -e AGENT_JWT_SECRET=ci-secret \
+            -e AGENT_JWT_ISSUER=control-plane \
+            -e AGENT_JWT_AUDIENCE=shop-agent \
+            -e AGENT_JWT_LEEWAY_SECONDS=0 \
+            -e AGENT_JWT_MAX_TTL_SECONDS=900 \
             shop-agent:test
 
       - name: Wait for health endpoint
@@ -49,13 +54,43 @@ jobs:
           echo "shop-agent did not become healthy in time"
           exit 1
 
+      - name: Generate JWT for API checks
+        run: |
+          TOKEN="$(python3 - <<'PY'
+          import base64
+          import hashlib
+          import hmac
+          import json
+          import time
+
+          def b64url(raw: bytes) -> str:
+              return base64.urlsafe_b64encode(raw).decode("utf-8").rstrip("=")
+
+          now = int(time.time())
+          header = {"alg": "HS256", "typ": "JWT"}
+          payload = {
+              "iss": "control-plane",
+              "aud": "shop-agent",
+              "iat": now,
+              "exp": now + 120,
+              "store_id": "shop-001",
+              "sub": "ci",
+          }
+          h = b64url(json.dumps(header, separators=(",", ":")).encode("utf-8"))
+          p = b64url(json.dumps(payload, separators=(",", ":")).encode("utf-8"))
+          sig = hmac.new(b"ci-secret", f"{h}.{p}".encode("utf-8"), hashlib.sha256).digest()
+          print(f"{h}.{p}.{b64url(sig)}")
+          PY
+          )"
+          echo "SHOP_AGENT_JWT=${TOKEN}" >> "$GITHUB_ENV"
+
       - name: Validate status endpoint with auth
         run: |
-          curl -fsS -H "Authorization: Bearer test-token" http://localhost:8091/status >/dev/null
+          curl -fsS -H "Authorization: Bearer ${SHOP_AGENT_JWT}" http://localhost:8091/status >/dev/null
 
       - name: Validate smoke endpoint with auth
         run: |
-          curl -fsS -X POST -H "Authorization: Bearer test-token" http://localhost:8091/verify/smoke >/dev/null
+          curl -fsS -X POST -H "Authorization: Bearer ${SHOP_AGENT_JWT}" http://localhost:8091/verify/smoke >/dev/null
 
       - name: Dump container logs on failure
         if: failure()

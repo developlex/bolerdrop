@@ -77,6 +77,32 @@ Exit criteria:
 - first store is independently startable/stoppable
 - store isolation invariants hold
 
+#### Phase 3 Immediate Task Breakdown
+
+1. Add first-store bootstrap compose profile under `instances/shop-001/`:
+   - include shop runtime placeholders,
+   - include Shop Agent runtime,
+   - keep all sensitive values runtime-injected only.
+2. Wire deterministic startup script path in `infra/scripts/`:
+   - bootstrap store runtime,
+   - validate required runtime env placeholders,
+   - fail fast on missing mandatory runtime injection.
+3. Define first-store health contract checks:
+   - storefront reachability check,
+   - Shop Agent `/health` check,
+   - Shop Agent authorized `/status` check.
+4. Add CI validation for first-store provisioning path:
+   - compose config validation,
+   - container startup smoke,
+   - teardown reliability check.
+5. Add reset/recovery script alignment:
+   - safe stop/remove flow,
+   - no manual runtime mutation assumptions.
+6. Document and verify bounded blast radius:
+   - no cross-store network dependency,
+   - no shared store secrets,
+   - no control-plane bypass paths.
+
 ### Phase 4 - Storefront Data Path (GraphQL Contract Slice)
 
 Deliver:

@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
+import base64
 import errno
+import hashlib
+import hmac
 import json
 import os
+import time
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Lock
@@ -15,6 +19,15 @@ STATE = {"last_successful_operation_timestamp": None}
 
 def utc_ts() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def b64url_encode(raw: bytes) -> str:
+    return base64.urlsafe_b64encode(raw).decode("utf-8").rstrip("=")
+
+
+def b64url_decode(data: str) -> bytes:
+    padding = "=" * ((4 - len(data) % 4) % 4)
+    return base64.urlsafe_b64decode(data + padding)
 
 
 def get_last_successful_operation_timestamp() -> str | None:
@@ -49,6 +62,24 @@ class Handler(BaseHTTPRequestHandler):
 
     def _auth_token(self) -> str:
         return os.getenv("AGENT_AUTH_TOKEN", "dev-token")
+
+    def _auth_mode(self) -> str:
+        return os.getenv("AGENT_AUTH_MODE", "jwt").lower()
+
+    def _jwt_secret(self) -> str:
+        return os.getenv("AGENT_JWT_SECRET", "")
+
+    def _jwt_issuer(self) -> str:
+        return os.getenv("AGENT_JWT_ISSUER", "control-plane")
+
+    def _jwt_audience(self) -> str:
+        return os.getenv("AGENT_JWT_AUDIENCE", "shop-agent")
+
+    def _jwt_leeway_seconds(self) -> int:
+        return int(os.getenv("AGENT_JWT_LEEWAY_SECONDS", "5"))
+
+    def _jwt_max_ttl_seconds(self) -> int:
+        return int(os.getenv("AGENT_JWT_MAX_TTL_SECONDS", "900"))
 
     def _actor(self) -> str:
         return self.headers.get("X-Actor-Id", "unknown")
@@ -93,12 +124,85 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(code, payload)
 
     def _is_authorized(self) -> bool:
-        expected = self._auth_token()
         auth_header = self.headers.get("Authorization", "")
+        token = None
         if auth_header.startswith("Bearer "):
-            return auth_header.split(" ", 1)[1] == expected
-        alt = self.headers.get("X-Agent-Token")
-        return alt == expected
+            token = auth_header.split(" ", 1)[1]
+        if token is None:
+            token = self.headers.get("X-Agent-Token")
+        if not token:
+            return False
+
+        if self._auth_mode() == "token":
+            return hmac.compare_digest(token, self._auth_token())
+
+        if self._auth_mode() == "jwt":
+            return self._is_valid_jwt(token)
+
+        return False
+
+    def _is_valid_jwt(self, token: str) -> bool:
+        secret = self._jwt_secret()
+        if not secret:
+            return False
+
+        try:
+            parts = token.split(".")
+            if len(parts) != 3:
+                return False
+            header_b64, payload_b64, signature_b64 = parts
+
+            signing_input = f"{header_b64}.{payload_b64}".encode("utf-8")
+            expected_signature = b64url_encode(
+                hmac.new(secret.encode("utf-8"), signing_input, hashlib.sha256).digest()
+            )
+            if not hmac.compare_digest(signature_b64, expected_signature):
+                return False
+
+            header = json.loads(b64url_decode(header_b64).decode("utf-8"))
+            payload = json.loads(b64url_decode(payload_b64).decode("utf-8"))
+
+            if header.get("alg") != "HS256":
+                return False
+
+            now = int(time.time())
+            leeway = self._jwt_leeway_seconds()
+            max_ttl = self._jwt_max_ttl_seconds()
+
+            exp = payload.get("exp")
+            iat = payload.get("iat")
+            iss = payload.get("iss")
+            aud = payload.get("aud")
+            token_store_id = payload.get("store_id")
+
+            if not isinstance(exp, int) or not isinstance(iat, int):
+                return False
+            if exp <= (now - leeway):
+                return False
+            if iat > (now + leeway):
+                return False
+            if (exp - iat) > max_ttl:
+                return False
+            if (now - iat) > (max_ttl + leeway):
+                return False
+
+            if iss != self._jwt_issuer():
+                return False
+            if isinstance(aud, str):
+                audience_ok = aud == self._jwt_audience()
+            elif isinstance(aud, list):
+                audience_ok = self._jwt_audience() in aud
+            else:
+                audience_ok = False
+            if not audience_ok:
+                return False
+
+            if token_store_id is not None and token_store_id != self._store_id():
+                return False
+
+            return True
+        except Exception:  # noqa: BLE001
+            return False
 
     def _ensure_authorized(self) -> bool:
         if self._is_authorized():

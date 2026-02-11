@@ -52,9 +52,12 @@ The minimum smoke suite must include:
 - storefront page load check,
 - basic catalog/product data query check,
 - shop agent health check,
+- shop agent authorized status/verification check,
 - platform/control-plane status check.
 
 Additional checks may be added but must not replace required checks.
+
+For protected operational endpoints, smoke verification must use authorized requests with runtime-injected credentials.
 
 ## 5. Execution Timing
 
