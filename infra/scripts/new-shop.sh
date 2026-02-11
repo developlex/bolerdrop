@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-usage: new-shop.sh <store-id> [--magento-port <port>] [--shop-agent-port <port>]
+usage: new-shop.sh <store-id> [--magento-port <port>] [--shop-agent-port <port>] [--storefront-port <port>]
 
 Creates instances/<store-id>/ with:
 - docker-compose.override.yml (full runtime template)
@@ -28,6 +28,7 @@ shift
 
 MAGENTO_PORT=""
 SHOP_AGENT_PORT=""
+STOREFRONT_PORT=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -37,6 +38,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --shop-agent-port)
       SHOP_AGENT_PORT="$2"
+      shift 2
+      ;;
+    --storefront-port)
+      STOREFRONT_PORT="$2"
       shift 2
       ;;
     -h|--help)
@@ -97,7 +102,7 @@ load_reserved_ports_from_envs() {
   for env_file in "${ROOT_DIR}"/instances/*/.env "${ROOT_DIR}"/instances/*/.env.example; do
     while IFS='=' read -r key value; do
       case "${key}" in
-        MAGENTO_HTTP_PORT|SHOP_AGENT_PORT)
+        MAGENTO_HTTP_PORT|SHOP_AGENT_PORT|STOREFRONT_PORT)
           if [[ "${value}" =~ ^[0-9]+$ ]]; then
             reserve_port "${value}"
           fi
@@ -131,6 +136,11 @@ if [[ -z "${SHOP_AGENT_PORT}" ]]; then
 fi
 reserve_port "${SHOP_AGENT_PORT}"
 
+if [[ -z "${STOREFRONT_PORT}" ]]; then
+  STOREFRONT_PORT="$(next_available_port 8281)"
+fi
+reserve_port "${STOREFRONT_PORT}"
+
 mkdir -p "${STORE_DIR}"
 cp "${TEMPLATE_COMPOSE}" "${STORE_DIR}/docker-compose.override.yml"
 
@@ -139,8 +149,10 @@ sed \
   -e "s#^MAGENTO_BASE_URL=.*#MAGENTO_BASE_URL=http://localhost:${MAGENTO_PORT}#" \
   -e "s/^MAGENTO_HTTP_PORT=.*/MAGENTO_HTTP_PORT=${MAGENTO_PORT}/" \
   -e "s/^SHOP_AGENT_PORT=.*/SHOP_AGENT_PORT=${SHOP_AGENT_PORT}/" \
+  -e "s#^STOREFRONT_BASE_URL=.*#STOREFRONT_BASE_URL=http://localhost:${STOREFRONT_PORT}#" \
+  -e "s/^STOREFRONT_PORT=.*/STOREFRONT_PORT=${STOREFRONT_PORT}/" \
   "${TEMPLATE_ENV}" > "${STORE_DIR}/.env.example"
 
 echo "created ${STORE_DIR}"
-echo "allocated ports: MAGENTO=${MAGENTO_PORT}, SHOP_AGENT=${SHOP_AGENT_PORT}"
+echo "allocated ports: MAGENTO=${MAGENTO_PORT}, SHOP_AGENT=${SHOP_AGENT_PORT}, STOREFRONT=${STOREFRONT_PORT}"
 echo "next: copy .env.example to .env and inject runtime values, or run bootstrap-platform.sh"

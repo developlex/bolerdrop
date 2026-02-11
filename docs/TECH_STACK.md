@@ -83,8 +83,10 @@ The Shop Agent exposes only allow-listed operational actions.
 
 Used to implement the customer-facing UI.
 
+- Next.js (React framework, server-first rendering profile)
 - React
 - TypeScript
+- Tailwind CSS (styling system profile)
 - Headless architecture
 - GraphQL-based data access
 

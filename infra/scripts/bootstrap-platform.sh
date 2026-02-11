@@ -153,7 +153,7 @@ collect_used_ports_from_existing_envs() {
   for env_file in "${ROOT_DIR}"/instances/*/.env "${ROOT_DIR}"/instances/*/.env.example; do
     while IFS='=' read -r key value; do
       case "${key}" in
-        MAGENTO_HTTP_PORT|SHOP_AGENT_PORT)
+        MAGENTO_HTTP_PORT|SHOP_AGENT_PORT|STOREFRONT_PORT)
           if [[ "${value}" =~ ^[0-9]+$ ]]; then
             reserve_port "${value}"
           fi
@@ -177,13 +177,16 @@ write_env_example() {
   local store_id="$1"
   local magento_port="$2"
   local shop_agent_port="$3"
-  local example_file="$4"
+  local storefront_port="$4"
+  local example_file="$5"
 
   sed \
     -e "s/^STORE_ID=.*/STORE_ID=${store_id}/" \
     -e "s#^MAGENTO_BASE_URL=.*#MAGENTO_BASE_URL=http://localhost:${magento_port}#" \
     -e "s/^MAGENTO_HTTP_PORT=.*/MAGENTO_HTTP_PORT=${magento_port}/" \
     -e "s/^SHOP_AGENT_PORT=.*/SHOP_AGENT_PORT=${shop_agent_port}/" \
+    -e "s#^STOREFRONT_BASE_URL=.*#STOREFRONT_BASE_URL=http://localhost:${storefront_port}#" \
+    -e "s/^STOREFRONT_PORT=.*/STOREFRONT_PORT=${storefront_port}/" \
     "${INSTANCE_TEMPLATE_ENV}" > "${example_file}"
 }
 
@@ -191,7 +194,8 @@ write_runtime_env() {
   local store_id="$1"
   local magento_port="$2"
   local shop_agent_port="$3"
-  local env_file="$4"
+  local storefront_port="$4"
+  local env_file="$5"
 
   local db_password="db_$(rand_hex 12)"
   local db_root_password="root_$(rand_hex 12)"
@@ -208,6 +212,8 @@ DEPLOYMENT_VERSION=local
 MAGENTO_BASE_URL=http://localhost:${magento_port}
 MAGENTO_HTTP_PORT=${magento_port}
 SHOP_AGENT_PORT=${shop_agent_port}
+STOREFRONT_BASE_URL=http://localhost:${storefront_port}
+STOREFRONT_PORT=${storefront_port}
 
 MAGENTO_SOURCE_MODE=git
 MAGENTO_PACKAGE=magento/project-community-edition
@@ -249,6 +255,7 @@ fi
 
 magento_port_cursor=8181
 agent_port_cursor=8191
+storefront_port_cursor=8281
 
 for (( offset=0; offset<COUNT; offset++ )); do
   index=$((START_INDEX + offset))
@@ -288,20 +295,38 @@ for (( offset=0; offset<COUNT; offset++ )); do
     agent_port_cursor=$((agent_port + 1))
   fi
 
-  write_env_example "${store_id}" "${magento_port}" "${agent_port}" "${env_example_file}"
+  storefront_port="$(read_port_from_file "${env_file}" "STOREFRONT_PORT")"
+  if [[ -z "${storefront_port}" ]]; then
+    storefront_port="$(read_port_from_file "${env_example_file}" "STOREFRONT_PORT")"
+  fi
+  if [[ ! "${storefront_port}" =~ ^[0-9]+$ ]]; then
+    storefront_port="$(next_available_port "${storefront_port_cursor}")"
+  fi
+  reserve_port "${storefront_port}"
+  if (( storefront_port >= storefront_port_cursor )); then
+    storefront_port_cursor=$((storefront_port + 1))
+  fi
+
+  write_env_example "${store_id}" "${magento_port}" "${agent_port}" "${storefront_port}" "${env_example_file}"
 
   if [[ ! -f "${env_file}" ]]; then
-    write_runtime_env "${store_id}" "${magento_port}" "${agent_port}" "${env_file}"
+    write_runtime_env "${store_id}" "${magento_port}" "${agent_port}" "${storefront_port}" "${env_file}"
   else
     current_store_id="$(grep -E '^STORE_ID=' "${env_file}" | head -n1 | cut -d= -f2- || true)"
     if [[ "${current_store_id}" != "${store_id}" ]]; then
       echo "existing ${env_file} has STORE_ID=${current_store_id}, expected ${store_id}"
       exit 1
     fi
+    if ! grep -Eq '^STOREFRONT_PORT=' "${env_file}"; then
+      printf '\nSTOREFRONT_PORT=%s\n' "${storefront_port}" >> "${env_file}"
+    fi
+    if ! grep -Eq '^STOREFRONT_BASE_URL=' "${env_file}"; then
+      printf 'STOREFRONT_BASE_URL=http://localhost:%s\n' "${storefront_port}" >> "${env_file}"
+    fi
   fi
 
   if (( PROVISION_ONLY == 1 )); then
-    echo "provisioned ${store_id} (MAGENTO=${magento_port}, SHOP_AGENT=${agent_port})"
+    echo "provisioned ${store_id} (MAGENTO=${magento_port}, SHOP_AGENT=${agent_port}, STOREFRONT=${storefront_port})"
     continue
   fi
 

@@ -147,6 +147,7 @@ Activities:
 
 - select isolation mode,
 - instantiate store runtime containers,
+- start decoupled storefront runtime profile,
 - inject configuration via templates,
 - fetch Magento package via Composer metapackage flow,
 - initialize Shop Agent for the store.
@@ -166,7 +167,8 @@ verify that the store instance is operational.
 Activities:
 
 - run store-local smoke tests,
-- verify storefront reachability,
+- verify Magento web reachability,
+- verify decoupled storefront reachability,
 - verify Shop Agent health.
 
 Completion criteria:
@@ -215,7 +217,17 @@ Reference command shape (placeholder form):
 make platform-bootstrap INSTANCES=<instance-count>
 ```
 
-## 6. Configuration Handling
+## 6. Execution Traceability
+
+This document defines contractual installation phases only.
+
+Command-level installation and validation order is maintained in:
+
+- `LOCAL_EXECUTION_FLOW.md`
+
+That execution procedure must remain aligned with this contract.
+
+## 7. Configuration Handling
 
 Rules:
 
@@ -227,7 +239,7 @@ Secrets handling is governed by:
 
 `SECRETS_MANAGEMENT.md`
 
-## 7. Failure Handling During Installation
+## 8. Failure Handling During Installation
 
 If installation fails at any phase:
 
@@ -237,7 +249,7 @@ If installation fails at any phase:
 
 Manual fixes invalidate the installation process.
 
-## 8. Installation Idempotency
+## 9. Installation Idempotency
 
 Installation must be:
 
@@ -247,7 +259,7 @@ Installation must be:
 
 Idempotency is a hard requirement.
 
-## 9. Post-Installation State
+## 10. Post-Installation State
 
 After successful installation:
 
@@ -258,7 +270,7 @@ After successful installation:
 
 No manual steps are required post-install.
 
-## 10. Non-Goals
+## 11. Non-Goals
 
 This document does not define:
 
@@ -269,7 +281,7 @@ This document does not define:
 
 These are covered elsewhere.
 
-## 11. Relationship to Other Documents
+## 12. Relationship to Other Documents
 
 This document is authoritative for:
 
@@ -287,7 +299,7 @@ In case of conflict:
 
 security and authority documents take precedence.
 
-## 12. Change Management
+## 13. Change Management
 
 Changes to installation flow:
 
@@ -295,7 +307,7 @@ Changes to installation flow:
 - require an ADR if architectural,
 - must preserve repeatability guarantees.
 
-## 13. Document Status
+## 14. Document Status
 
 This document is DRAFT
 

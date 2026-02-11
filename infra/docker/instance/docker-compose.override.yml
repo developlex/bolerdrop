@@ -202,6 +202,36 @@ services:
     networks:
       - store-network
 
+  storefront:
+    build:
+      context: ../../frontend/storefront
+      dockerfile: Dockerfile
+    container_name: ${STORE_ID}-storefront
+    environment:
+      COMMERCE_GRAPHQL_URL: http://magento-web/graphql
+      STOREFRONT_BASE_URL: ${STOREFRONT_BASE_URL}
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "${STOREFRONT_PORT}:3000"
+    depends_on:
+      magento-web:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - store-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+
   shop-agent:
     build:
       context: ../../backend/shop-agent
