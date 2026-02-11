@@ -58,6 +58,7 @@ commerce-platform-blueprint/
 │   ├── DOCKER_ORCHESTRATION_MODEL.md
 │   ├── OBSERVABILITY_MODEL.md
 │   ├── IMPLEMENTATION_ROADMAP.md
+│   ├── TECH_DEBT.md
 │   ├── LOCAL_EXECUTION_FLOW.md
 │   │
 │   ├── RUNBOOK.md
@@ -85,13 +86,18 @@ commerce-platform-blueprint/
 │   │   │
 │   │   ├── instance/
 │   │   │   ├── docker-compose.override.yml
-│   │   │   └── ports.env
+│   │   │   ├── env.example
+│   │   │   ├── ports.env
+│   │   │   └── magento-app/
+│   │   │       ├── Dockerfile
+│   │   │       └── php.ini
 │   │   │
 │   │   └── control-plane/
 │   │       └── docker-compose.yml
 │   │
 │   └── scripts/
 │       ├── new-shop.sh
+│       ├── bootstrap-platform.sh
 │       ├── install-magento.sh
 │       ├── seed-data.sh
 │       ├── reset-instance.sh

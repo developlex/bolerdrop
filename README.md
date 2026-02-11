@@ -34,6 +34,21 @@ Related security contracts:
 - Magento runtime is PHP-based and requires a web tier profile (`Apache` or `Nginx`) plus supporting services.
 - Extension/plugin baseline and low-custom-code decisions are tracked in `docs/MAGENTO_PLUGIN_STRATEGY.md`.
 
+## Quick Bootstrap (Local)
+
+Provision and launch multiple store instances with one command:
+
+```bash
+make platform-bootstrap INSTANCES=<instance-count>
+```
+
+This flow:
+
+- allocates available local ports per instance,
+- creates/updates `instances/<store-id>/` runtime files,
+- injects runtime-only values into local `.env` files (ignored by git),
+- installs and starts each requested store runtime slice.
+
 ## Documentation Authority
 
 The root governance and precedence rules are defined in:
