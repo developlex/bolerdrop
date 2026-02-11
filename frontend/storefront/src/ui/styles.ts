@@ -23,7 +23,8 @@ export const ui = {
     mediaPlaceholder: "flex h-full items-center justify-center text-sm text-steel"
   },
   state: {
-    warning: "rounded border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+    warning: "rounded border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900",
+    success: "rounded border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900"
   },
   form: {
     input: "w-full rounded border border-gray-300 bg-white px-3 py-2",

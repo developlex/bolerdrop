@@ -1,8 +1,17 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { logoutAction } from "@/app/actions/account";
 import { getCustomerProfile } from "@/src/lib/commerce/customer";
 import { ui } from "@/src/ui/styles";
+
+export const metadata: Metadata = {
+  title: "My Account | BoilerDrop Storefront",
+  robots: {
+    index: false,
+    follow: false
+  }
+};
 
 export default async function AccountPage() {
   const cookieStore = await cookies();
