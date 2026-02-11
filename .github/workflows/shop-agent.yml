@@ -1,0 +1,66 @@
+name: shop-agent
+
+on:
+  push:
+    paths:
+      - ".github/workflows/shop-agent.yml"
+      - "backend/shop-agent/**"
+  pull_request:
+    paths:
+      - ".github/workflows/shop-agent.yml"
+      - "backend/shop-agent/**"
+
+jobs:
+  shop-agent-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Python syntax
+        run: python3 -m py_compile backend/shop-agent/src/server.py
+
+      - name: Run unit tests
+        run: python3 -m unittest discover -s backend/shop-agent/tests -p "test_*.py"
+
+      - name: Build shop-agent image
+        run: docker build -t shop-agent:test backend/shop-agent
+
+      - name: Start shop-agent container
+        run: |
+          docker run -d --rm \
+            --name shop-agent-test \
+            -p 8091:8080 \
+            -e STORE_ID=shop-001 \
+            -e SHOP_AGENT_VERSION=0.1.0 \
+            -e DEPLOYMENT_VERSION=ci \
+            -e AGENT_AUTH_TOKEN=test-token \
+            shop-agent:test
+
+      - name: Wait for health endpoint
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8091/health >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "shop-agent did not become healthy in time"
+          exit 1
+
+      - name: Validate status endpoint with auth
+        run: |
+          curl -fsS -H "Authorization: Bearer test-token" http://localhost:8091/status >/dev/null
+
+      - name: Validate smoke endpoint with auth
+        run: |
+          curl -fsS -X POST -H "Authorization: Bearer test-token" http://localhost:8091/verify/smoke >/dev/null
+
+      - name: Dump container logs on failure
+        if: failure()
+        run: docker logs shop-agent-test
+
+      - name: Shutdown
+        if: always()
+        run: docker rm -f shop-agent-test || true

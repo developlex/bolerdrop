@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import errno
 import json
 import os
 from datetime import datetime, timezone
@@ -13,13 +14,30 @@ def utc_ts() -> str:
 class Handler(BaseHTTPRequestHandler):
     server_version = "BoilerDropControlPlane/0.1"
 
-    def _send_json(self, code: int, payload: dict) -> None:
+    def _is_client_disconnect(self, exc: BaseException) -> bool:
+        if isinstance(exc, (BrokenPipeError, ConnectionResetError)):
+            return True
+        if isinstance(exc, OSError):
+            return exc.errno in {errno.EPIPE, errno.ECONNRESET, 54}
+        return False
+
+    def _send_json(self, code: int, payload: dict) -> bool:
         body = json.dumps(payload).encode("utf-8")
-        self.send_response(code)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+        try:
+            self.send_response(code)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return True
+        except Exception as exc:  # noqa: BLE001
+            if self._is_client_disconnect(exc):
+                print(
+                    f"{utc_ts()} component=control-plane-api event=client-disconnect "
+                    f"method={self.command} path={self.path} code={code}"
+                )
+                return False
+            raise
 
     def _base_payload(self, status: str, message: str) -> dict:
         return {
