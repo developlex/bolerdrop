@@ -60,8 +60,13 @@ PR requirements:
 - explicit rationale with dedicated `Why this change is needed` section,
 - test evidence for first-party code changes,
 - CI checks green.
+- code-owner review required on protected branches.
 
 At least one reviewer approval is required before merge.
+
+Default reviewer ownership is declared in `.github/CODEOWNERS`:
+
+- `* @<repo-owner-or-team>`
 
 Repository pull request template must be used to enforce consistent reviewer context.
 
@@ -128,6 +133,7 @@ git push -u origin master
 Required files:
 
 - `.github/pull_request_template.md` (includes `What changed` and `Why this change is needed`)
+- `.github/CODEOWNERS` (defines default reviewer ownership)
 - `.github/workflows/pr-gate.yml` (always-on required status check)
 - `.github/workflows/pr-automerge.yml` (optional label-driven auto-merge for stable branches)
 
@@ -155,7 +161,7 @@ cat > /tmp/branch-protection.json <<'JSON'
   "enforce_admins": true,
   "required_pull_request_reviews": {
     "dismiss_stale_reviews": true,
-    "require_code_owner_reviews": false,
+    "require_code_owner_reviews": true,
     "required_approving_review_count": 1,
     "require_last_push_approval": true
   },
@@ -201,6 +207,7 @@ done
 Verification must show:
 
 - required PR reviews (1 approval),
+- required code-owner review,
 - required status checks (`pr-gate / pr-gate`),
 - force push disabled,
 - deletion disabled,
