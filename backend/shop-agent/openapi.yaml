@@ -1,0 +1,169 @@
+openapi: 3.0.3
+info:
+  title: BoilerDrop Shop Agent API
+  version: 0.1.0
+  description: >
+    Minimal allowlisted Shop Agent operational API. Non-health endpoints require
+    bearer authentication.
+servers:
+  - url: http://localhost:8091
+paths:
+  /health:
+    get:
+      summary: Liveness/readiness indicator
+      responses:
+        "200":
+          description: Shop Agent healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+  /status:
+    get:
+      summary: Operational status summary
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current agent status
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      agent_version:
+                        type: string
+                      store_id:
+                        type: string
+                      deployment_version:
+                        type: string
+                      last_successful_operation_timestamp:
+                        type: string
+                        nullable: true
+                      component_states:
+                        type: object
+                        additionalProperties:
+                          type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /ops/cache/flush:
+    post:
+      summary: Flush cache (non-destructive)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/OperationSuccess"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /ops/index/reindex:
+    post:
+      summary: Trigger index rebuild
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/OperationSuccess"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /ops/cron/run:
+    post:
+      summary: Trigger bounded cron run
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/OperationSuccess"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /ops/diagnostics:
+    post:
+      summary: Collect minimal diagnostics summary
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/OperationSuccess"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /verify/smoke:
+    post:
+      summary: Run store-local smoke verification
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/OperationSuccess"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: token
+  responses:
+    Unauthorized:
+      description: Missing or invalid authorization
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/FailureResponse"
+    OperationSuccess:
+      description: Operation completed
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: "#/components/schemas/SuccessResponse"
+              - type: object
+                properties:
+                  operation:
+                    type: string
+                  store_id:
+                    type: string
+                  operation_timestamp:
+                    type: string
+  schemas:
+    SuccessResponse:
+      type: object
+      required:
+        - request_id
+        - timestamp
+        - status
+        - message
+      properties:
+        request_id:
+          type: string
+        timestamp:
+          type: string
+        status:
+          type: string
+          enum: [success]
+        message:
+          type: string
+    FailureResponse:
+      type: object
+      required:
+        - request_id
+        - timestamp
+        - status
+        - message
+        - error_code
+        - retryable
+      properties:
+        request_id:
+          type: string
+        timestamp:
+          type: string
+        status:
+          type: string
+          enum: [failure]
+        message:
+          type: string
+        error_code:
+          type: string
+        retryable:
+          type: boolean
