@@ -49,6 +49,65 @@ This flow:
 - injects runtime-only values into local `.env` files (ignored by git),
 - installs and starts each requested store runtime slice.
 
+## Installation and Validation (Local)
+
+Use this order for deterministic local setup:
+
+1. Provision or bootstrap instances:
+
+```bash
+make platform-provision INSTANCES=<instance-count>
+# or
+make platform-bootstrap INSTANCES=<instance-count>
+```
+
+2. Verify runtime endpoints for each started instance:
+
+```bash
+curl -fsS http://localhost:<magento-port>
+curl -fsS http://localhost:<storefront-port>
+curl -fsS http://localhost:<shop-agent-port>/health
+```
+
+3. Run quality gates before pushing:
+
+```bash
+# Control Plane
+python3 -m pip install --upgrade pip ruff mypy
+python3 infra/scripts/python-standards-check.py control-plane/api/src
+ruff check control-plane/api/src infra/scripts/python-standards-check.py
+mypy --python-version 3.14 control-plane/api/src/server.py infra/scripts/python-standards-check.py
+python3 -m py_compile control-plane/api/src/server.py
+
+# Shop Agent
+python3 -m pip install --upgrade pip ruff mypy
+python3 infra/scripts/python-standards-check.py backend/shop-agent/src backend/shop-agent/tests
+ruff check backend/shop-agent/src backend/shop-agent/tests infra/scripts/python-standards-check.py
+mypy --python-version 3.14 backend/shop-agent/src/server.py
+python3 -m unittest discover -s backend/shop-agent/tests -p "test_*.py"
+
+# Storefront
+cd frontend/storefront
+npm ci
+npm run check:standards
+npm run test
+npm run typecheck
+npm run build
+```
+
+4. Rebuild changed services and re-check health:
+
+```bash
+docker compose --env-file instances/<store-id>/.env \
+  -f instances/<store-id>/docker-compose.override.yml up -d --build
+docker compose --env-file instances/<store-id>/.env \
+  -f instances/<store-id>/docker-compose.override.yml ps
+```
+
+Command-level execution details are tracked in:
+
+- `docs/LOCAL_EXECUTION_FLOW.md`
+
 ## Documentation Authority
 
 The root governance and precedence rules are defined in:

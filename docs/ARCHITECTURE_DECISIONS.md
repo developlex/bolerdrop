@@ -74,7 +74,7 @@ Control Plane never communicates with Magento directly.
 The storefront is decoupled from the commerce backend.
 
 - Backend: Adobe Commerce (Magento)
-- Frontend: React + TypeScript
+- Frontend: Next.js (React + TypeScript) with server-first rendering profile
 - Contract: GraphQL API
 
 This approach enables:
@@ -83,6 +83,12 @@ This approach enables:
 - frontend scalability,
 - alignment with modern commerce practices,
 - simplified external integrations.
+
+Storefront selection is a platform-level runtime/profile decision.
+
+- decoupled storefront runtime selection is not managed through Magento theme selection,
+- Magento native storefront remains a separate runtime profile if enabled,
+- routing/profile configuration determines which storefront surface is active per store.
 
 ## 6. API Strategy
 

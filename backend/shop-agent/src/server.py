@@ -14,7 +14,7 @@ from uuid import uuid4
 
 
 STATE_LOCK = Lock()
-STATE = {"last_successful_operation_timestamp": None}
+STATE: dict[str, str | None] = {"last_successful_operation_timestamp": None}
 
 
 def utc_ts() -> str:

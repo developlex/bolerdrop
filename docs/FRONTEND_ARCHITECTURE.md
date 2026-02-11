@@ -20,7 +20,7 @@ This document does not:
 - define UI/UX design,
 - define concrete components,
 - define API queries or schemas,
-- prescribe build tooling details.
+- prescribe package-manager workflows or local developer tooling commands.
 
 ## 2. Architectural Positioning
 
@@ -44,6 +44,27 @@ At a conceptual level, the frontend consists of the following layers:
 - Integration Boundary
 
 Each layer has a single responsibility.
+
+### 3.1 Runtime and Rendering Profile (Current Decision)
+
+For storefront delivery, the current profile is:
+
+- decoupled headless storefront runtime,
+- Next.js + TypeScript application shell,
+- server-first rendering for indexable customer surfaces,
+- GraphQL contract consumption through the documented integration boundary.
+
+SEO-critical surfaces (entry, listing, PDP, and canonical content pages) must be renderable server-side.
+
+### 3.2 Storefront Selection Boundary
+
+Storefront runtime selection is a platform-level profile decision, not a Magento theme toggle.
+
+Rules:
+
+- Magento theme selector is not the control point for decoupled storefront runtime selection,
+- decoupled storefront may live in this repository but remains replaceable as an independent deployable unit,
+- routing to storefront runtime is controlled by platform/runtime configuration.
 
 ## 4. Application Shell
 
@@ -108,6 +129,12 @@ Boundaries:
 
 State does not replace backend validation.
 
+State management adoption policy:
+
+- initial slice: no global client state manager is required by default,
+- server state should be handled at the data-access boundary,
+- introduce a dedicated client state manager only when cart/session complexity requires it.
+
 ## 8. Data Access Layer
 
 The data access layer:
@@ -139,7 +166,31 @@ No other layer may:
 - call APIs directly,
 - interpret backend responses ad hoc.
 
-## 10. Error Handling Model
+## 10. Style Contract Boundary
+
+Magento-coupled storefront views must remain style-agnostic at the component boundary.
+
+Rules:
+
+- components that render contract data (catalog, PDP, cart, account) must consume shared UI style primitives/tokens,
+- style tokens and reusable surface/action/text classes are centralized in a dedicated UI style module,
+- layout or branding refreshes must be applied in the shared style layer first, not ad hoc per commerce component.
+
+This ensures Magento-coupled components inherit a single style approach without duplicating styling logic.
+
+### 10.1 Enforcement Profile
+
+Frontend standards are enforced in CI and local execution through a dedicated standards gate.
+
+Minimum enforced constraints:
+
+- no explicit `any` in first-party storefront app/lib code,
+- no `forwardRef` usage for React 19 profile,
+- no `useContext` usage where `use(Context)` is required by the active profile.
+
+Rule selection is aligned to actively maintained (2025+) React/Next composition and performance guidance.
+
+## 11. Error Handling Model
 
 Error handling:
 
@@ -149,7 +200,7 @@ Error handling:
 
 Operational errors and user errors are distinguished.
 
-## 11. Security Considerations
+## 12. Security Considerations
 
 Frontend security rules:
 
@@ -162,7 +213,7 @@ Security model is defined in:
 
 `SECURITY_MODEL.md`
 
-## 12. Performance Considerations (Conceptual)
+## 13. Performance Considerations (Conceptual)
 
 The frontend:
 
@@ -172,7 +223,7 @@ The frontend:
 
 Performance is a concern, not a constraint at this stage.
 
-## 13. Testing Boundaries
+## 14. Testing Boundaries
 
 Frontend testing responsibilities include:
 
@@ -189,19 +240,19 @@ Testing strategy is defined in:
 
 `TESTING_STRATEGY.md`
 
-## 14. Non-Goals
+## 15. Non-Goals
 
 This document does not define:
 
 - visual design system,
 - CSS or styling strategy,
 - analytics implementation,
-- SEO optimization,
+- SEO keyword/content strategy specifics,
 - accessibility specifics.
 
 These may be documented elsewhere.
 
-## 15. Relationship to Other Documents
+## 16. Relationship to Other Documents
 
 This document is authoritative for:
 
@@ -219,7 +270,7 @@ In case of conflict:
 
 security and architectural documents take precedence.
 
-## 16. Change Management
+## 17. Change Management
 
 Changes to frontend architecture:
 
@@ -227,7 +278,7 @@ Changes to frontend architecture:
 - require an ADR entry if architectural,
 - must preserve layer boundaries.
 
-## 17. Document Status
+## 18. Document Status
 
 This document is DRAFT
 

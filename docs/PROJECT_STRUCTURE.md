@@ -76,7 +76,8 @@ commerce-platform-blueprint/
 │   │
 │   └── adr/
 │       ├── README.md
-│       └── 0001-record-architecture-decisions.md
+│       ├── 0001-record-architecture-decisions.md
+│       └── 0002-storefront-runtime-and-rendering-profile.md
 │
 ├── infra/
 │   ├── docker/
@@ -102,7 +103,8 @@ commerce-platform-blueprint/
 │       ├── seed-data.sh
 │       ├── reset-instance.sh
 │       ├── backup-instance.sh
-│       └── health-check.sh
+│       ├── health-check.sh
+│       └── python-standards-check.py
 │
 ├── backend/
 │   ├── magento/
@@ -125,13 +127,19 @@ commerce-platform-blueprint/
 ├── frontend/
 │   └── storefront/
 │       ├── app/
-│       ├── components/
-│       ├── graphql/
-│       ├── hooks/
-│       ├── styles/
+│       ├── src/
+│       │   ├── components/
+│       │   ├── lib/
+│       │   └── ui/
+│       ├── public/
+│       ├── scripts/
 │       ├── tests/
 │       ├── Dockerfile
-│       └── next.config.js
+│       ├── package.json
+│       ├── next.config.js
+│       ├── tsconfig.json
+│       ├── tailwind.config.ts
+│       └── postcss.config.js
 │
 ├── control-plane/
 │   ├── api/

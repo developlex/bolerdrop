@@ -31,6 +31,8 @@ fi
 required_env=(
   STORE_ID
   MAGENTO_BASE_URL
+  STOREFRONT_BASE_URL
+  STOREFRONT_PORT
   MAGENTO_SOURCE_MODE
   MAGENTO_PACKAGE
   MAGENTO_DB_NAME
@@ -192,4 +194,5 @@ echo "warming generated code/cache"
 '
 
 echo "installation complete for ${STORE_ID}"
-echo "storefront URL should be available at the configured MAGENTO_BASE_URL"
+echo "Magento web URL should be available at MAGENTO_BASE_URL"
+echo "Decoupled storefront URL should be available at STOREFRONT_BASE_URL"

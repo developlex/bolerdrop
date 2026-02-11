@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #111318;
+  --color-mist: #f4f6f8;
+  --color-ember: #c34d28;
+  --color-steel: #6b7280;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--color-mist);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--color-ember);
+}
+
+a:hover {
+  text-decoration: underline;
+}
