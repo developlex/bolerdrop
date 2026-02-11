@@ -1,26 +1,56 @@
-import { ProductCard } from "@/src/components/product-card";
-import { getCatalogProducts } from "@/src/lib/commerce/catalog";
-import { ui } from "@/src/ui/styles";
+import type { Metadata } from "next";
+import { permanentRedirect } from "next/navigation";
+import { CatalogPageView } from "@/src/components/catalog-page-view";
+import { getCatalogPageHref, parsePageParam } from "@/src/lib/commerce/pagination";
 
 export const revalidate = 120;
 
-export default async function HomePage() {
-  const products = await getCatalogProducts(12, 1);
+export const metadata: Metadata = {
+  title: "Products | BoilerDrop Storefront",
+  description: "Browse products from BoilerDrop storefront catalog.",
+  alternates: {
+    canonical: "/"
+  }
+};
 
-  return (
-    <section>
-      <h1 className={ui.text.pageTitle + " mb-6"}>Products</h1>
-      {products.length === 0 ? (
-        <p className={ui.state.warning}>
-          No catalog data returned from Magento GraphQL.
-        </p>
-      ) : (
-        <div className={ui.grid.catalog}>
-          {products.map((product) => (
-            <ProductCard key={product.id || product.sku} product={product} />
-          ))}
-        </div>
-      )}
-    </section>
-  );
+type RootSearchParams = {
+  page?: string | string[];
+  [key: string]: string | string[] | undefined;
+};
+
+function buildQueryWithoutPage(searchParams: RootSearchParams): string {
+  const nextParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (key === "page" || value === undefined) {
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        nextParams.append(key, item);
+      }
+      continue;
+    }
+
+    nextParams.set(key, value);
+  }
+  return nextParams.toString();
+}
+
+export default async function HomePage({
+  searchParams
+}: {
+  searchParams?: Promise<RootSearchParams>;
+}) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+
+  if (resolvedSearchParams?.page !== undefined) {
+    const parsedPage = parsePageParam(resolvedSearchParams.page) ?? 1;
+    const baseHref = getCatalogPageHref(parsedPage);
+    const query = buildQueryWithoutPage(resolvedSearchParams);
+    const target = query ? `${baseHref}?${query}` : baseHref;
+    permanentRedirect(target);
+  }
+
+  return <CatalogPageView page={1} />;
 }

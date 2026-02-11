@@ -5,6 +5,12 @@ type GraphQLResponse<T> = {
   errors?: Array<{ message?: string }>;
 };
 
+export type GraphQLOperation<TData, TVariables extends Record<string, unknown>> = {
+  query: string;
+  operationName: string;
+  defaultVariables?: TVariables;
+};
+
 export class CommerceError extends Error {
   constructor(message: string) {
     super(message);
@@ -41,4 +47,15 @@ export async function commerceGraphQL<T>(query: string, variables: Record<string
   }
 
   return json.data;
+}
+
+export async function commerceOperation<TData, TVariables extends Record<string, unknown>>(
+  operation: GraphQLOperation<TData, TVariables>,
+  variables: TVariables,
+  customerToken?: string,
+): Promise<TData> {
+  const effectiveVariables = operation.defaultVariables
+    ? { ...operation.defaultVariables, ...variables }
+    : variables;
+  return commerceGraphQL<TData>(operation.query, effectiveVariables, customerToken);
 }

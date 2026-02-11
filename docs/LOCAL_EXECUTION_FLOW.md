@@ -240,7 +240,51 @@ curl -fsS http://localhost:8281
 curl -fsS http://localhost:8281/api/health
 ```
 
-### Step 6: Stop local storefront runtime
+### Step 6: Verify storefront SEO surfaces (canonical + crawl + metadata)
+
+Use placeholder values for base URL and URL key in all environments:
+
+```bash
+export STOREFRONT_BASE_URL=<storefront-base-url>
+export SAMPLE_PRODUCT_URL_KEY=<product-url-key>
+```
+
+Verify canonical pagination behavior:
+
+```bash
+curl -I -s "${STOREFRONT_BASE_URL}/?page=2"
+curl -I -s "${STOREFRONT_BASE_URL}/page/2"
+```
+
+Expected outcome:
+
+- `/?page=2` returns `308` with `location: /page/2`,
+- `/page/2` returns `200`.
+
+Verify crawl-control endpoints:
+
+```bash
+curl -fsS "${STOREFRONT_BASE_URL}/robots.txt"
+curl -fsS "${STOREFRONT_BASE_URL}/sitemap.xml"
+```
+
+Expected outcome:
+
+- `robots.txt` includes `Sitemap: <storefront-base-url>/sitemap.xml`,
+- `sitemap.xml` contains canonical catalog and product URLs.
+
+Verify product metadata + schema output:
+
+```bash
+curl -fsS "${STOREFRONT_BASE_URL}/product/${SAMPLE_PRODUCT_URL_KEY}"
+```
+
+Expected outcome:
+
+- canonical metadata points to `/product/<product-url-key>`,
+- page contains JSON-LD `Product` schema block.
+
+### Step 7: Stop local storefront runtime
 
 Use `Ctrl+C` in the foreground `docker run` terminal.
 

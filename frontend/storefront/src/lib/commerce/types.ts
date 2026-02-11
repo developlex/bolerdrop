@@ -8,6 +8,15 @@ export type CatalogProduct = {
   currency: string | null;
 };
 
+export type CatalogPage = {
+  products: CatalogProduct[];
+  totalCount: number;
+  currentPage: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+};
+
 export type ProductDetail = CatalogProduct & {
   descriptionHtml: string | null;
   shortDescriptionHtml: string | null;
