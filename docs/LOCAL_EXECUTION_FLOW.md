@@ -15,6 +15,7 @@ This document records the exact command order used to execute and validate curre
 
 ```bash
 bash -n infra/scripts/new-shop.sh
+bash -n infra/scripts/bootstrap-platform.sh
 bash -n infra/scripts/health-check.sh
 bash -n infra/scripts/reset-instance.sh
 ```
@@ -154,14 +155,121 @@ The workflow in `.github/workflows/shop-agent.yml` executes in this order:
 9. Dump logs on failure
 10. Shutdown container
 
-## 6. Notes
+## 6. Local Execution Order (Automated Multi-Store Bootstrap)
+
+### Step 1: Provision-only dry run (non-destructive)
+
+```bash
+make platform-provision INSTANCES=<instance-count>
+```
+
+Equivalent:
+
+```bash
+bash infra/scripts/bootstrap-platform.sh --count <instance-count> --provision-only
+```
+
+### Step 2: Launch all requested stores with one command
+
+```bash
+make platform-bootstrap INSTANCES=<instance-count>
+```
+
+Equivalent:
+
+```bash
+bash infra/scripts/bootstrap-platform.sh --count <instance-count>
+```
+
+Execution behavior:
+
+1. optionally starts Control Plane runtime,
+2. creates missing `instances/<store-id>/` directories from shared templates,
+3. allocates available host ports per store automatically,
+4. writes non-secret `.env.example` and runtime `.env` files per store,
+5. installs and starts each store runtime sequentially.
+
+Optional variants:
+
+```bash
+# Start runtime containers only (skip Magento install)
+make platform-bootstrap INSTANCES=<instance-count> NO_INSTALL=1
+
+# Do not start Control Plane
+make platform-bootstrap INSTANCES=<instance-count> NO_CONTROL_PLANE=1
+```
+
+## 7. Local Execution Order (Single Store Manual Path)
+
+### Step 1: Prepare runtime env file
+
+```bash
+cp instances/shop-001/.env.example instances/shop-001/.env
+```
+
+Inject runtime values in `instances/shop-001/.env` for:
+
+- Magento source mode (`composer` or `git`) and corresponding source credentials/refs,
+- database/admin bootstrap values,
+- Shop Agent JWT values.
+
+### Step 2: Validate installer script syntax
+
+```bash
+bash -n infra/scripts/install-magento.sh
+```
+
+### Step 3: Start runtime + install Magento
+
+```bash
+bash infra/scripts/install-magento.sh shop-001
+```
+
+Installer execution order:
+
+1. validates required runtime keys and rejects placeholder values,
+2. starts store runtime via compose (`up -d --build`),
+3. waits for MySQL/OpenSearch readiness,
+4. installs Magento source (Composer mode or Git mode),
+5. normalizes runtime filesystem ownership for web runtime compatibility,
+6. runs `bin/magento setup:install` if instance is not installed,
+7. runs post-install upgrade/cache flush as non-root application user.
+
+Runtime notes:
+
+- `magento-cron` runs `bin/magento cron:run` every minute inside the stack.
+- This is the containerized equivalent of Adobe's crontab guidance for Magento.
+
+### Step 4: Verify storefront and agent
+
+```bash
+curl -fsS http://localhost:8181
+curl -fsS http://localhost:8191/health
+```
+
+Optional status code check:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8181
+docker compose --env-file instances/shop-001/.env \
+  -f instances/shop-001/docker-compose.override.yml ps
+```
+
+### Step 5: Shutdown runtime
+
+```bash
+docker compose --env-file instances/shop-001/.env \
+  -f instances/shop-001/docker-compose.override.yml down --remove-orphans
+```
+
+## 8. Notes
 
 - Docker daemon must be running locally before startup commands.
 - Health gate is considered passing only when both `/health` and `/status` checks succeed.
 - Runtime credential/config values are never stored in repository files.
 - Use placeholders in local command history/examples; inject real values at runtime only.
 
-## 7. Relationship to Other Documents
+## 9. Relationship to Other Documents
 
 This document depends on:
 
@@ -172,7 +280,7 @@ This document depends on:
 
 In case of conflict, contractual docs take precedence.
 
-## 8. Document Status
+## 10. Document Status
 
 This document is DRAFT
 

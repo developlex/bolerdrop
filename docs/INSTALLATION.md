@@ -63,6 +63,8 @@ For Magento runtime compatibility (conceptual baseline):
 - web server profile must be explicitly selected (Apache 2.4.x or Nginx),
 - search backend profile must be selected (OpenSearch-compatible),
 - database/cache profiles must be selected before first store provisioning.
+- Magento source mode must be selected explicitly (Composer metapackage or Git source flow).
+- If Composer mode is used, `repo.magento.com` credentials must be available at runtime (not committed).
 
 Installation documentation must not assume Apache-only topology.
 
@@ -146,6 +148,7 @@ Activities:
 - select isolation mode,
 - instantiate store runtime containers,
 - inject configuration via templates,
+- fetch Magento package via Composer metapackage flow,
 - initialize Shop Agent for the store.
 
 Constraints:
@@ -189,6 +192,28 @@ Activities:
 - validate isolation guarantees.
 
 Each store must be independently manageable.
+
+### Automated Multi-Store Bootstrap Profile (Local/Non-Production)
+
+For local bootstrap, the platform supports a single-command profile that:
+
+- accepts an instance count,
+- allocates available host ports per store automatically,
+- creates `instances/<store-id>/` runtime files from shared templates,
+- injects runtime-only values into local `.env` files,
+- starts each requested store runtime slice in sequence.
+
+This profile must remain:
+
+- deterministic,
+- idempotent on re-run,
+- free of committed secrets.
+
+Reference command shape (placeholder form):
+
+```bash
+make platform-bootstrap INSTANCES=<instance-count>
+```
 
 ## 6. Configuration Handling
 

@@ -53,6 +53,7 @@ It is used to:
 | `docs/DOCKER_ORCHESTRATION_MODEL.md` | DRAFT | 90% | Container orchestration boundaries, unit types, and isolation-preserving lifecycle rules are now defined. |
 | `docs/OBSERVABILITY_MODEL.md` | DRAFT | 91% | Required health/log/metric/trace/audit signals and platform-vs-store visibility boundaries are now defined. |
 | `docs/IMPLEMENTATION_ROADMAP.md` | DRAFT | 92% | Roadmap now includes concrete Phase 3 immediate execution checklist in addition to phase sequencing and milestones. |
+| `docs/TECH_DEBT.md` | DRAFT | 90% | Technical debt register established with prioritized bootstrap/security/isolation follow-up items. |
 | `docs/LOCAL_EXECUTION_FLOW.md` | DRAFT | 93% | Local/CI execution steps now cover both Control Plane and Shop Agent slices, including auth-injected smoke verification flow. |
 | `docs/RUNBOOK.md` | DRAFT | 89% | Operational contract now defines incident categories, response boundaries, and prohibited operator actions. |
 | `docs/SECURITY_MODEL.md` | DRAFT | 89% | Contractual trust boundaries, threat model, and security control relationships are now defined. |
@@ -67,7 +68,7 @@ It is used to:
 ## 4. Overall Score
 
 - Current overall documentation completeness: **90%**
-- Documents with non-zero completeness: **36 / 36**
+- Documents with non-zero completeness: **37 / 37**
 - Highest-priority gaps: none
 - Cross-reference gaps to close: none currently detected among completed core governance docs
 

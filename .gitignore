@@ -1,5 +1,6 @@
 instances/**/.env
 instances/**/.env.*
+!instances/**/.env.example
 instances/**/secrets*
 *.pem
 *.key
