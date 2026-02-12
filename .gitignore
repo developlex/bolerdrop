@@ -21,3 +21,6 @@ node_modules/
 .idea/
 .vscode/
 .DS_Store
+
+# Local design reference sandboxes
+design tests/
