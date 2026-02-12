@@ -3,6 +3,8 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { placeOrderAction } from "@/app/actions/checkout";
 import { getCart, getCheckoutReadiness } from "@/src/lib/commerce/cart";
+import { getCountryRegions } from "@/src/lib/commerce/directory";
+import { dedupeUsStateOptions, US_COUNTRY_CODE, US_COUNTRY_LABEL, US_STATE_OPTIONS } from "@/src/lib/forms/us-states";
 import { ui } from "@/src/ui/styles";
 
 export const metadata: Metadata = {
@@ -17,6 +19,11 @@ type SearchParams = {
   checkout?: string | string[];
   reason?: string | string[];
   order?: string | string[];
+};
+
+type StateOption = {
+  code: string;
+  name: string;
 };
 
 function getFirstValue(input: string | string[] | undefined): string | null {
@@ -49,6 +56,9 @@ function getCheckoutNotice(searchParams: SearchParams | undefined): { type: "suc
   const byReason: Record<string, string> = {
     "missing-cart": "Cart session was not found. Add products before checkout.",
     "invalid-email": "Enter a valid email address before placing order.",
+    "invalid-shipping-address": "Shipping address is required for physical products.",
+    "missing-shipping-method": "Select a shipping method before placing order.",
+    "invalid-shipping-method": "Selected shipping method is not available for this cart.",
     "missing-payment-method": "Select a payment method before placing order.",
     "cart-not-ready": "Cart is not ready for checkout yet. Resolve shipping/payment readiness first.",
     "checkout-failed": "Checkout failed in commerce backend. Review cart readiness and try again.",
@@ -87,6 +97,10 @@ export default async function CartPage({
 
   let cart;
   let readiness = null;
+  const storeRegions = await getCountryRegions(US_COUNTRY_CODE).catch(() => []);
+  const stateOptions: StateOption[] = dedupeUsStateOptions(storeRegions.length > 0
+    ? storeRegions.map((region) => ({ code: region.code, name: region.name }))
+    : [...US_STATE_OPTIONS]);
   try {
     cart = await getCart(cartId);
     readiness = await getCheckoutReadiness(cartId);
@@ -163,12 +177,81 @@ export default async function CartPage({
 
             <form action={placeOrderAction} className="space-y-3">
               <label className="block text-sm">
-                <span className={ui.text.label + " mb-1 block"}>Guest email</span>
+                <span className={ui.text.label + " mb-1 block"}>Guest email *</span>
                 <input name="email" type="email" required className={ui.form.input} placeholder="name@example.com" />
               </label>
+              {!readiness.isVirtual ? (
+                <div className="space-y-3">
+                  <p className={ui.text.label}>Shipping address</p>
+                  <label className="block text-sm">
+                    <span className={ui.text.label + " mb-1 block"}>First name *</span>
+                    <input name="shipping_firstname" type="text" required className={ui.form.input} />
+                  </label>
+                  <label className="block text-sm">
+                    <span className={ui.text.label + " mb-1 block"}>Last name *</span>
+                    <input name="shipping_lastname" type="text" required className={ui.form.input} />
+                  </label>
+                  <label className="block text-sm">
+                    <span className={ui.text.label + " mb-1 block"}>Street line 1 *</span>
+                    <input name="shipping_street_1" type="text" required className={ui.form.input} />
+                  </label>
+                  <label className="block text-sm">
+                    <span className={ui.text.label + " mb-1 block"}>Street line 2 (optional)</span>
+                    <input name="shipping_street_2" type="text" className={ui.form.input} />
+                  </label>
+                  <label className="block text-sm">
+                    <span className={ui.text.label + " mb-1 block"}>City *</span>
+                    <input name="shipping_city" type="text" required className={ui.form.input} />
+                  </label>
+                  <label className="block text-sm">
+                    <span className={ui.text.label + " mb-1 block"}>State *</span>
+                    <select name="shipping_state" required defaultValue="" className={ui.form.select}>
+                      <option value="" disabled>Select state</option>
+                      {stateOptions.map((state) => (
+                        <option key={`${state.code}-${state.name}`} value={state.code}>
+                          {state.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block text-sm">
+                    <span className={ui.text.label + " mb-1 block"}>ZIP Code *</span>
+                    <input name="shipping_postcode" type="text" required className={ui.form.input} />
+                  </label>
+                  <label className="block text-sm">
+                    <span className={ui.text.label + " mb-1 block"}>Country *</span>
+                    <select name="shipping_country_code" required defaultValue={US_COUNTRY_CODE} className={ui.form.select}>
+                      <option value={US_COUNTRY_CODE}>{US_COUNTRY_LABEL}</option>
+                    </select>
+                  </label>
+                  <label className="block text-sm">
+                    <span className={ui.text.label + " mb-1 block"}>Telephone *</span>
+                    <input name="shipping_telephone" type="tel" required className={ui.form.input} />
+                  </label>
+                  <label className="block text-sm">
+                    <span className={ui.text.label + " mb-1 block"}>Shipping method *</span>
+                    <select
+                      name="shipping_method"
+                      className={ui.form.select}
+                      defaultValue={
+                        readiness.selectedShippingMethod ??
+                        (readiness.availableShippingMethods[0]
+                          ? `${readiness.availableShippingMethods[0].carrierCode}:${readiness.availableShippingMethods[0].methodCode}`
+                          : "")
+                      }
+                    >
+                      {readiness.availableShippingMethods.map((method) => (
+                        <option key={`${method.carrierCode}:${method.methodCode}`} value={`${method.carrierCode}:${method.methodCode}`}>
+                          {method.carrierTitle ?? method.carrierCode} - {method.methodTitle ?? method.methodCode}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              ) : null}
               <label className="block text-sm">
-                <span className={ui.text.label + " mb-1 block"}>Payment method</span>
-                <select name="payment_method" className={ui.form.input} defaultValue={readiness.availablePaymentMethods[0]?.code ?? ""}>
+                <span className={ui.text.label + " mb-1 block"}>Payment method *</span>
+                <select name="payment_method" className={ui.form.select} defaultValue={readiness.availablePaymentMethods[0]?.code ?? ""}>
                   {readiness.availablePaymentMethods.map((method) => (
                     <option key={method.code} value={method.code}>
                       {method.title || method.code}

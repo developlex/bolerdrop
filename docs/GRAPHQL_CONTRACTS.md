@@ -140,6 +140,8 @@ Cart semantics:
 The schema must support:
 
 - capturing required customer inputs (conceptual),
+- capturing shipping address inputs for physical carts,
+- capturing or selecting shipping method for physical carts,
 - validating checkout readiness (conceptual),
 - submitting checkout to create an order outcome (conceptual),
 - returning confirmation surface data.
@@ -151,10 +153,11 @@ This document does not define payment mechanics.
 If supported, the schema may include:
 
 - login/logout operations,
+- customer account registration operations,
 - retrieving customer profile basics,
 - retrieving order history.
 
-This is out of scope for core storefront operation unless explicitly enabled.
+This remains optional for core checkout operation, but customer-session flows may be enabled per storefront profile.
 
 ## 8. Mutation Safety Rules
 
@@ -164,6 +167,11 @@ GraphQL mutations must be:
 - scoped to the active customer/cart session,
 - validated server-side,
 - idempotent where feasible.
+
+For checkout mutations:
+
+- shipping address mutation must be executed before shipping method resolution,
+- shipping method must be validated against methods available for the active cart scope.
 
 Mutations must not:
 

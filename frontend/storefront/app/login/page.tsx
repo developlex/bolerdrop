@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { loginAction } from "@/app/actions/account";
 import { ui } from "@/src/ui/styles";
 
@@ -30,7 +31,9 @@ export function resolveLoginErrorMessage(searchParams?: SearchParams): string | 
   const byCode: Record<string, string> = {
     "missing-credentials": "Email and password are required.",
     "invalid-credentials": "Sign-in failed. Check your credentials and try again.",
-    "auth-unavailable": "Sign-in service is currently unavailable. Try again in a moment."
+    "auth-unavailable": "Sign-in service is currently unavailable. Try again in a moment.",
+    "session-expired": "Your session expired. Sign in again to continue.",
+    "wishlist-auth": "Sign in to add products to your wish list."
   };
 
   return byCode[errorCode] ?? "Sign-in failed. Please try again.";
@@ -65,6 +68,12 @@ export default async function LoginPage({
             Sign in
           </button>
         </form>
+        <p className={ui.text.subtitle + " mt-4"}>
+          New customer?{" "}
+          <Link href="/register" className={ui.text.link}>
+            Create an account
+          </Link>
+        </p>
       </div>
     </section>
   );

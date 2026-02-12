@@ -65,6 +65,41 @@ test("getCatalogPage maps products and pagination metadata", async () => {
   }
 });
 
+test("getCatalogPage forwards normalized search term", async () => {
+  const previousFetch = globalThis.fetch;
+  const previousGraphqlUrl = process.env.COMMERCE_GRAPHQL_URL;
+  process.env.COMMERCE_GRAPHQL_URL = "http://commerce.test/graphql";
+
+  globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+    const requestBody = typeof init?.body === "string" ? JSON.parse(init.body) as {
+      variables?: { search?: string };
+    } : {};
+    assert.equal(requestBody.variables?.search, "wireless earbuds");
+
+    return jsonResponse({
+      data: {
+        products: {
+          items: [],
+          total_count: 0,
+          page_info: { current_page: 1, total_pages: 1 }
+        }
+      }
+    });
+  }) as typeof fetch;
+
+  try {
+    const catalog = await getCatalogPage(12, 1, "  wireless   earbuds  ");
+    assert.equal(catalog.totalCount, 0);
+  } finally {
+    globalThis.fetch = previousFetch;
+    if (previousGraphqlUrl === undefined) {
+      delete process.env.COMMERCE_GRAPHQL_URL;
+    } else {
+      process.env.COMMERCE_GRAPHQL_URL = previousGraphqlUrl;
+    }
+  }
+});
+
 test("getCatalogPage filters products with missing SKU or url_key", async () => {
   const previousFetch = globalThis.fetch;
   const previousGraphqlUrl = process.env.COMMERCE_GRAPHQL_URL;

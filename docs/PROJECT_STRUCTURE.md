@@ -100,7 +100,7 @@ commerce-platform-blueprint/
 │       ├── new-shop.sh
 │       ├── bootstrap-platform.sh
 │       ├── install-magento.sh
-│       ├── seed-data.sh
+│       ├── import-shopify-products.sh
 │       ├── reset-instance.sh
 │       ├── backup-instance.sh
 │       ├── health-check.sh
@@ -127,9 +127,11 @@ commerce-platform-blueprint/
 ├── frontend/
 │   └── storefront/
 │       ├── app/
+│       ├── proxy.ts
 │       ├── src/
 │       │   ├── components/
 │       │   ├── lib/
+│       │   ├── themes/
 │       │   └── ui/
 │       ├── public/
 │       ├── scripts/
@@ -138,7 +140,6 @@ commerce-platform-blueprint/
 │       ├── package.json
 │       ├── next.config.js
 │       ├── tsconfig.json
-│       ├── tailwind.config.ts
 │       └── postcss.config.js
 │
 ├── control-plane/

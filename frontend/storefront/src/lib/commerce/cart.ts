@@ -7,13 +7,18 @@ import {
   GET_CART_QUERY,
   PLACE_ORDER_MUTATION,
   SET_GUEST_EMAIL_ON_CART_MUTATION,
-  SET_PAYMENT_METHOD_ON_CART_MUTATION
+  SET_PAYMENT_METHOD_ON_CART_MUTATION,
+  SET_SHIPPING_ADDRESSES_ON_CART_MUTATION,
+  SET_SHIPPING_METHODS_ON_CART_MUTATION
 } from "@/src/lib/commerce/queries";
 import type {
   CartSnapshot,
   CheckoutReadiness,
   MagentoCartNode,
+  PlaceGuestOrderInput,
   PaymentMethodOption,
+  ShippingAddressInput,
+  ShippingMethodInput,
   ShippingMethodOption
 } from "@/src/lib/commerce/types";
 
@@ -42,6 +47,22 @@ type SetGuestEmailResponse = {
 
 type SetPaymentMethodResponse = {
   setPaymentMethodOnCart: {
+    cart: {
+      id: string;
+    };
+  };
+};
+
+type SetShippingAddressesResponse = {
+  setShippingAddressesOnCart: {
+    cart: {
+      id: string;
+    };
+  };
+};
+
+type SetShippingMethodsResponse = {
+  setShippingMethodsOnCart: {
     cart: {
       id: string;
     };
@@ -173,6 +194,28 @@ export async function setPaymentMethodOnCart(cartId: string, paymentMethodCode: 
   });
 }
 
+export async function setShippingAddressOnCart(cartId: string, shippingAddress: ShippingAddressInput): Promise<void> {
+  await commerceGraphQL<SetShippingAddressesResponse>(SET_SHIPPING_ADDRESSES_ON_CART_MUTATION, {
+    cartId,
+    firstname: shippingAddress.firstname,
+    lastname: shippingAddress.lastname,
+    street: shippingAddress.street,
+    city: shippingAddress.city,
+    postcode: shippingAddress.postcode,
+    countryCode: shippingAddress.countryCode,
+    telephone: shippingAddress.telephone,
+    region: shippingAddress.region
+  });
+}
+
+export async function setShippingMethodOnCart(cartId: string, shippingMethod: ShippingMethodInput): Promise<void> {
+  await commerceGraphQL<SetShippingMethodsResponse>(SET_SHIPPING_METHODS_ON_CART_MUTATION, {
+    cartId,
+    carrierCode: shippingMethod.carrierCode,
+    methodCode: shippingMethod.methodCode
+  });
+}
+
 export async function placeOrder(cartId: string): Promise<string> {
   const data = await commerceGraphQL<PlaceOrderResponse>(PLACE_ORDER_MUTATION, { cartId });
   const orderNumber = data.placeOrder.orderV2?.number;
@@ -182,8 +225,17 @@ export async function placeOrder(cartId: string): Promise<string> {
   return orderNumber;
 }
 
-export async function placeGuestOrder(cartId: string, email: string, paymentMethodCode: string): Promise<string> {
-  await setGuestEmailOnCart(cartId, email);
-  await setPaymentMethodOnCart(cartId, paymentMethodCode);
+export async function placeGuestOrder(cartId: string, input: PlaceGuestOrderInput): Promise<string> {
+  await setGuestEmailOnCart(cartId, input.email);
+
+  if (input.shippingAddress) {
+    await setShippingAddressOnCart(cartId, input.shippingAddress);
+  }
+
+  if (input.shippingMethod) {
+    await setShippingMethodOnCart(cartId, input.shippingMethod);
+  }
+
+  await setPaymentMethodOnCart(cartId, input.paymentMethodCode);
   return placeOrder(cartId);
 }

@@ -229,6 +229,7 @@ docker build -t storefront:test frontend/storefront
 docker run --rm -p 8281:3000 \
   -e COMMERCE_GRAPHQL_URL=http://localhost:8181/graphql \
   -e STOREFRONT_BASE_URL=http://localhost:8281 \
+  -e STOREFRONT_THEME=dropship \
   -e HOSTNAME=0.0.0.0 \
   storefront:test
 ```
@@ -238,9 +239,42 @@ In a separate terminal:
 ```bash
 curl -fsS http://localhost:8281
 curl -fsS http://localhost:8281/api/health
+curl -fsS http://localhost:8281/api/theme
 ```
 
-### Step 6: Verify storefront SEO surfaces (canonical + crawl + metadata)
+### Step 6: Verify storefront checkout readiness flow (manual browser path)
+
+In a browser:
+
+1. open storefront root (`http://localhost:<storefront-port>`),
+2. open a product page and add one physical SKU to cart,
+3. in cart, submit guest email + shipping address + shipping method + payment method,
+4. verify redirect to `/order/confirmation?order=<order-number>`.
+
+Expected outcome:
+
+- checkout failure states stay on `/cart` with non-sensitive reason mapping,
+- successful placement clears cart session cookie and shows order summary on confirmation surface.
+
+Optional live theme switch check:
+
+- open `${STOREFRONT_BASE_URL}`,
+- use the top-bar theme switcher to toggle between `sunset` and `dropship`,
+- verify theme updates immediately without manual refresh,
+- refresh once and verify selected theme persists via cookie.
+
+Optional direct-link check:
+
+- open `${STOREFRONT_BASE_URL}/?theme=sunset` and verify cookie-based switch works,
+- open `${STOREFRONT_BASE_URL}/?theme=dropship` and verify style switches back.
+
+Optional account-registration check:
+
+- open `${STOREFRONT_BASE_URL}/register`,
+- submit valid customer details,
+- verify redirect to `${STOREFRONT_BASE_URL}/account?registered=1`.
+
+### Step 7: Verify storefront SEO surfaces (canonical + crawl + metadata)
 
 Use placeholder values for base URL and URL key in all environments:
 
@@ -284,7 +318,7 @@ Expected outcome:
 - canonical metadata points to `/product/<product-url-key>`,
 - page contains JSON-LD `Product` schema block.
 
-### Step 7: Stop local storefront runtime
+### Step 8: Stop local storefront runtime
 
 Use `Ctrl+C` in the foreground `docker run` terminal.
 
@@ -345,6 +379,7 @@ Inject runtime values in `instances/shop-001/.env` for:
 - Magento source mode (`composer` or `git`) and corresponding source credentials/refs,
 - storefront runtime port/base-url values,
 - storefront runtime enable flag (`STOREFRONT_ENABLED=1` to enable, `0` to disable),
+- storefront design profile (`STOREFRONT_THEME=dropship` or `STOREFRONT_THEME=sunset`),
 - database/admin bootstrap values,
 - Shop Agent JWT values.
 
@@ -404,7 +439,32 @@ If `STOREFRONT_ENABLED=1`:
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8281
 ```
 
-### Step 5: Shutdown runtime
+### Step 5: Seed catalog products (optional but recommended for storefront testing)
+
+Use the seed script to import source products (name, price, description, primary image) into Magento:
+
+```bash
+bash infra/scripts/import-shopify-products.sh shop-001 --limit 10
+```
+
+Execution behavior:
+
+1. reads instance runtime configuration from `instances/shop-001/.env`,
+2. fetches source products from configured JSON feed (`--source-url` override supported),
+3. authenticates to Magento Admin REST API,
+4. upserts simple products with deterministic SKUs (`shopify-<source-handle>` by default),
+5. uploads primary product images,
+6. runs reindex + cache flush for immediate catalog visibility.
+
+Verification:
+
+```bash
+curl -fsS http://localhost:8181/graphql \
+  -H 'Content-Type: application/json' \
+  --data '{"query":"{products(search:\"shopify-\", pageSize: 20){total_count items{name sku image{url}}}}"}'
+```
+
+### Step 6: Shutdown runtime
 
 ```bash
 docker compose --env-file instances/shop-001/.env \
@@ -442,6 +502,13 @@ docker compose --env-file instances/shop-001/.env \
   -f instances/shop-001/docker-compose.override.yml up -d --build storefront
 ```
 
+To reload all instance services after cross-service changes:
+
+```bash
+docker compose --env-file instances/shop-001/.env \
+  -f instances/shop-001/docker-compose.override.yml up -d --build --remove-orphans
+```
+
 ### Step 5: Verify runtime behavior and health state
 
 ```bash
@@ -464,6 +531,7 @@ Expected outcome:
 - Runtime credential/config values are never stored in repository files.
 - Use placeholders in local command history/examples; inject real values at runtime only.
 - For JavaScript runtimes, use current LTS profile by default unless a contract document states otherwise.
+- Storefront local runtime uses Next.js dev mode in container for automatic code reload; there is no separate `--reload` flag for Next.js.
 
 ## 11. Relationship to Other Documents
 

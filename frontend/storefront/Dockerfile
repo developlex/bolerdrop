@@ -3,6 +3,14 @@ WORKDIR /app
 COPY package.json ./
 RUN npm install --no-audit --no-fund
 
+FROM node:24-alpine AS dev
+WORKDIR /app
+ENV NODE_ENV=development
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+EXPOSE 3000
+CMD ["npm", "run", "dev"]
+
 FROM node:24-alpine AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules

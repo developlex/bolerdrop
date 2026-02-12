@@ -15,6 +15,14 @@ test("resolveLoginErrorMessage maps known errors", () => {
     resolveLoginErrorMessage({ error: "auth-unavailable" }),
     "Sign-in service is currently unavailable. Try again in a moment.",
   );
+  assert.equal(
+    resolveLoginErrorMessage({ error: "session-expired" }),
+    "Your session expired. Sign in again to continue.",
+  );
+  assert.equal(
+    resolveLoginErrorMessage({ error: "wishlist-auth" }),
+    "Sign in to add products to your wish list.",
+  );
 });
 
 test("resolveLoginErrorMessage handles arrays and unknown codes", () => {

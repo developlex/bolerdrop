@@ -215,6 +215,7 @@ SHOP_AGENT_PORT=${shop_agent_port}
 STOREFRONT_BASE_URL=http://localhost:${storefront_port}
 STOREFRONT_PORT=${storefront_port}
 STOREFRONT_ENABLED=1
+STOREFRONT_THEME=dropship
 
 MAGENTO_SOURCE_MODE=git
 MAGENTO_PACKAGE=magento/project-community-edition
@@ -360,6 +361,9 @@ for (( offset=0; offset<COUNT; offset++ )); do
     fi
     if ! grep -Eq '^STOREFRONT_ENABLED=' "${env_file}"; then
       printf 'STOREFRONT_ENABLED=1\n' >> "${env_file}"
+    fi
+    if ! grep -Eq '^STOREFRONT_THEME=' "${env_file}"; then
+      printf 'STOREFRONT_THEME=dropship\n' >> "${env_file}"
     fi
   fi
 

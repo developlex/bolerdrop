@@ -60,6 +60,38 @@ STOREFRONT_ENABLED=1
 - `1`: start decoupled storefront container (`http://localhost:<storefront-port>`)
 - `0`: do not run decoupled storefront; use Magento frontend only (`http://localhost:<magento-port>`)
 
+### Storefront Theme Selection
+
+Each instance can select an active storefront design profile:
+
+```bash
+STOREFRONT_THEME=dropship
+```
+
+Supported values currently:
+
+- `dropship`
+- `sunset`
+
+You can also switch themes at runtime from the storefront top-bar theme toggle.
+
+Runtime behavior:
+
+- applies selected theme immediately (no manual refresh required),
+- stores selection in `storefront_theme` cookie for persistence across reloads,
+- keeps optional `?theme=<id>` URL support for direct-link theme switching.
+
+Debug active theme in runtime:
+
+```bash
+curl -fsS http://localhost:<storefront-port>/api/theme
+```
+
+Theme definitions are versioned under:
+
+- `frontend/storefront/src/themes/themes.ts` (registry + tokens)
+- `frontend/storefront/src/components/theme-switcher.tsx` (runtime switch UI)
+
 After changing the flag, rerun instance bootstrap/install for that store:
 
 ```bash
