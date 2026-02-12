@@ -1,87 +1,89 @@
 # BoilerDrop
 
-BoilerDrop is a commerce platform blueprint with strict separation between:
+BoilerDrop is a multi-store commerce platform blueprint with strict separation between:
 
 - store runtime instances,
 - a centralized control plane,
 - infrastructure templates,
 - contractual documentation in `docs/`.
 
+## Project Purpose
+
+BoilerDrop exists to provide a reproducible, contract-driven foundation for running multiple isolated Magento store instances with minimal manual setup.
+
+The project is designed to:
+
+- bootstrap one or many store instances with deterministic runtime configuration,
+- enforce security/isolation/authority boundaries as first-class constraints,
+- support a decoupled storefront that can be enabled per instance without breaking Magento baseline operation,
+- keep delivery auditable through PR-gated workflows and documented operational contracts.
+
+This project is not a single-store custom theme repo; it is a multi-instance platform boilerplate and execution model.
+
+## Current Status
+
+- Documentation readiness gate is marked `READY` in `docs/DOCUMENTATION_AUDIT.md`.
+- Implementation is in Phase 4 parity hardening (storefront/account/cart/checkout focus) per `docs/IMPLEMENTATION_ROADMAP.md`.
+- Storefront coverage is tracked in `docs/STOREFRONT_FUNCTIONALITY_MATRIX.md`.
+
 ## Repository Map
 
 - `docs/`: architecture, security, operations, and API contracts
 - `backend/`: Magento runtime extensions and Shop Agent boundary service
-- `frontend/`: storefront frontend application
-- `control-plane/`: platform orchestration API and UI
-- `infra/`: deployment/runtime templates and scripts
+- `frontend/`: decoupled storefront application
+- `control-plane/`: platform orchestration API/UI
+- `infra/`: Docker templates and automation scripts
 - `instances/`: per-store runtime configuration templates
+- `.github/`: workflows, PR template, and CODEOWNERS
 
-## Security Documentation
+## Governance and Delivery Rules
 
-The platform-wide security threat model is defined in:
+- Root authority: `AGENT.md`
+- Branching/PR policy: `docs/GIT_WORKFLOW.md`
+- `main`/`master`: protected, PR-only, no direct push
+- `dev`: integration branch, direct push allowed
 
-- `docs/SECURITY_THREAT_MODEL.md`
+If docs and implementation diverge, higher-authority docs govern.
 
-Related security contracts:
+## Quick Local Bootstrap
 
-- `docs/SECURITY_MODEL.md`
-- `docs/SECRETS_MANAGEMENT.md`
-- `docs/CONTROL_PLANE_AUTHORITY.md`
-- `docs/SHOP_AGENT_API.md`
-
-## Commerce Runtime Notes
-
-- Magento runtime is PHP-based and requires a web tier profile (`Apache` or `Nginx`) plus supporting services.
-- Extension/plugin baseline and low-custom-code decisions are tracked in `docs/MAGENTO_PLUGIN_STRATEGY.md`.
-
-## Quick Bootstrap (Local)
-
-Provision and launch multiple store instances with one command:
+Provision and launch multiple store instances:
 
 ```bash
 make platform-bootstrap INSTANCES=<instance-count>
 ```
 
-This flow:
+Provision-only (no runtime startup):
 
-- allocates available local ports per instance,
-- creates/updates `instances/<store-id>/` runtime files,
-- injects runtime-only values into local `.env` files (ignored by git),
-- installs and starts each requested store runtime slice.
+```bash
+make platform-provision INSTANCES=<instance-count>
+```
 
-### Storefront Toggle Per Instance
+Core execution/validation order is maintained in:
 
-Each instance supports a one-flag storefront toggle in `instances/<store-id>/.env`:
+- `docs/LOCAL_EXECUTION_FLOW.md`
+- `docs/INSTALLATION.md`
+
+## Storefront Runtime Controls
+
+Per instance (`instances/<store-id>/.env`):
 
 ```bash
 STOREFRONT_ENABLED=1
-```
-
-- `1`: start decoupled storefront container (`http://localhost:<storefront-port>`)
-- `0`: do not run decoupled storefront; use Magento frontend only (`http://localhost:<magento-port>`)
-
-### Storefront Theme Selection
-
-Each instance can select an active storefront design profile:
-
-```bash
 STOREFRONT_THEME=dropship
 ```
 
-Supported values currently:
+- `STOREFRONT_ENABLED=1`: run decoupled storefront container
+- `STOREFRONT_ENABLED=0`: use Magento frontend only
+- supported themes: `dropship`, `sunset`
 
-- `dropship`
-- `sunset`
+Theme switching behavior:
 
-You can also switch themes at runtime from the storefront top-bar theme toggle.
+- immediate switch in top-bar toggle (no manual refresh),
+- persisted in `storefront_theme` cookie,
+- optional direct-link override via `?theme=<id>`.
 
-Runtime behavior:
-
-- applies selected theme immediately (no manual refresh required),
-- stores selection in `storefront_theme` cookie for persistence across reloads,
-- keeps optional `?theme=<id>` URL support for direct-link theme switching.
-
-Debug active theme in runtime:
+Debug active theme:
 
 ```bash
 curl -fsS http://localhost:<storefront-port>/api/theme
@@ -92,79 +94,49 @@ Theme definitions are versioned under:
 - `frontend/storefront/src/themes/themes.ts` (registry + tokens)
 - `frontend/storefront/src/components/theme-switcher.tsx` (runtime switch UI)
 
-After changing the flag, rerun instance bootstrap/install for that store:
+After changing storefront runtime flags, rerun instance bootstrap/install for that store:
 
 ```bash
 bash infra/scripts/install-magento.sh <store-id>
 ```
 
-## Installation and Validation (Local)
+## Optional Catalog Seed Import (Shopify Source)
 
-Use this order for deterministic local setup:
-
-1. Provision or bootstrap instances:
+Generic importer script:
 
 ```bash
-make platform-provision INSTANCES=<instance-count>
-# or
-make platform-bootstrap INSTANCES=<instance-count>
+bash infra/scripts/import-shopify-products.sh <store-id> --limit <count> \
+  --source-url "https://<shop-domain>/collections/<collection-handle>/products.json?limit=250&page=1"
 ```
 
-2. Verify runtime endpoints for each started instance:
+Notes:
 
-```bash
-curl -fsS http://localhost:<magento-port>
-curl -fsS http://localhost:<storefront-port>
-curl -fsS http://localhost:<shop-agent-port>/health
-```
+- source URL must be explicitly provided (placeholder values are rejected),
+- SKU prefix defaults to `shopify-` (override with `SKU_PREFIX` env var when needed).
 
-3. Run quality gates before pushing:
+## Security and Contracts
 
-```bash
-# Control Plane
-python3 -m pip install --upgrade pip ruff mypy
-python3 infra/scripts/python-standards-check.py control-plane/api/src
-ruff check control-plane/api/src infra/scripts/python-standards-check.py
-mypy --python-version 3.14 control-plane/api/src/server.py infra/scripts/python-standards-check.py
-python3 -m py_compile control-plane/api/src/server.py
+Primary security contracts:
 
-# Shop Agent
-python3 -m pip install --upgrade pip ruff mypy
-python3 infra/scripts/python-standards-check.py backend/shop-agent/src backend/shop-agent/tests
-ruff check backend/shop-agent/src backend/shop-agent/tests infra/scripts/python-standards-check.py
-mypy --python-version 3.14 backend/shop-agent/src/server.py
-python3 -m unittest discover -s backend/shop-agent/tests -p "test_*.py"
+- `docs/SECURITY_MODEL.md`
+- `docs/SECURITY_THREAT_MODEL.md`
+- `docs/SECRETS_MANAGEMENT.md`
+- `docs/CONTROL_PLANE_AUTHORITY.md`
+- `docs/SHOP_AGENT_API.md`
 
-# Storefront
-cd frontend/storefront
-npm ci
-npm run check:standards
-npm run test
-npm run typecheck
-npm run build
-```
+Related platform contracts:
 
-4. Rebuild changed services and re-check health:
+- `docs/CI_CD_OVERVIEW.md`
+- `docs/DEPLOYMENT_PIPELINE.md`
+- `docs/ROLLBACK_STRATEGY.md`
+- `docs/TESTING_STRATEGY.md`
+- `docs/DEFINITION_OF_DONE.md`
 
-```bash
-docker compose --env-file instances/<store-id>/.env \
-  -f instances/<store-id>/docker-compose.override.yml up -d --build
-docker compose --env-file instances/<store-id>/.env \
-  -f instances/<store-id>/docker-compose.override.yml ps
-```
+## Doc Navigation
 
-Command-level execution details are tracked in:
+For fast onboarding:
 
-- `docs/LOCAL_EXECUTION_FLOW.md`
-
-## Documentation Authority
-
-The root governance and precedence rules are defined in:
-
-- `AGENT.md`
-
-If documentation and implementation diverge, higher-authority documentation governs.
-
-Delivery workflow and branch/PR policy are defined in:
-
-- `docs/GIT_WORKFLOW.md`
+1. Vision and boundaries: `docs/PROJECT_VISION.md`, `docs/ARCHITECTURE_DECISIONS.md`
+2. Physical structure: `docs/PROJECT_STRUCTURE.md`
+3. Execution and operations: `docs/LOCAL_EXECUTION_FLOW.md`, `docs/RUNBOOK.md`
+4. Active implementation tracking: `docs/IMPLEMENTATION_ROADMAP.md`, `docs/TECH_DEBT.md`
