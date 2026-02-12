@@ -44,12 +44,21 @@ function normalizePositiveInt(value: number, fallback: number): number {
   return Number.isInteger(value) && value > 0 ? value : fallback;
 }
 
-export async function getCatalogPage(pageSize = 12, currentPage = 1): Promise<CatalogPage> {
+function normalizeSearchTerm(searchTerm: string): string {
+  const normalized = searchTerm.trim().replace(/\s+/g, " ");
+  if (!normalized) {
+    return "";
+  }
+  return normalized.slice(0, 120);
+}
+
+export async function getCatalogPage(pageSize = 12, currentPage = 1, searchTerm = ""): Promise<CatalogPage> {
   const safePageSize = normalizePositiveInt(pageSize, 12);
   const safeCurrentPage = normalizePositiveInt(currentPage, 1);
+  const safeSearch = normalizeSearchTerm(searchTerm);
 
   const data = await commerceOperation(LIST_PRODUCTS_OPERATION, {
-    search: "",
+    search: safeSearch,
     pageSize: safePageSize,
     currentPage: safeCurrentPage
   });
@@ -73,8 +82,8 @@ export async function getCatalogPage(pageSize = 12, currentPage = 1): Promise<Ca
   };
 }
 
-export async function getCatalogProducts(pageSize = 12, currentPage = 1): Promise<CatalogProduct[]> {
-  const page = await getCatalogPage(pageSize, currentPage);
+export async function getCatalogProducts(pageSize = 12, currentPage = 1, searchTerm = ""): Promise<CatalogProduct[]> {
+  const page = await getCatalogPage(pageSize, currentPage, searchTerm);
   return page.products;
 }
 

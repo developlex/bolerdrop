@@ -62,15 +62,16 @@ A guest customer may:
 
 Guest identity is ephemeral.
 
-### 3.3 Registered Customer (Optional / Future)
+### 3.3 Registered Customer
 
 A registered customer may additionally:
 
 - authenticate,
+- register a new account,
 - access saved information,
 - view historical purchases.
 
-Registration is not required for core storefront operation.
+Registration is optional for checkout but supported for account-based flows.
 
 ## 4. High-Level Customer Journeys
 
@@ -191,6 +192,7 @@ Checkout represents the transition from intent to purchase.
 Characteristics:
 
 - requires customer-provided information,
+- captures shipping address and shipping method for physical carts,
 - proceeds through defined stages,
 - results in either completion or abandonment.
 

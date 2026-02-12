@@ -3,7 +3,7 @@
 Status: ACTIVE  
 Type: Documentation coverage audit  
 Scope: All files under `/docs`  
-Last updated: 2026-02-11
+Last updated: 2026-02-12
 
 ## 1. Purpose
 
@@ -29,7 +29,7 @@ It is used to:
 |---|---|---:|---|
 | `docs/PROJECT_VISION.md` | DRAFT | 78% | Strong business framing; can add measurable business KPIs. |
 | `docs/ARCHITECTURE_DECISIONS.md` | DRAFT | 88% | Core invariants defined; storefront runtime profile and decoupled selection boundary clarified. |
-| `docs/PROJECT_STRUCTURE.md` | DRAFT | 95% | Structure map now includes storefront style-contract layers and shared Python standards gate utility under `infra/scripts`. |
+| `docs/PROJECT_STRUCTURE.md` | DRAFT | 96% | Structure map now includes storefront proxy + theme registry layout and reflects Tailwind v4 postcss-only setup (no local Tailwind config file). |
 | `docs/GIT_WORKFLOW.md` | DRAFT | 96% | Branch model (`main`/`master` stable + `dev` working), direct-push policy, code-owner review requirement, reproducible branch-protection steps, and optional auto-merge flow are explicitly defined. |
 | `docs/DOCUMENTATION_AUDIT.md` | ACTIVE | 70% | Baseline audit in place; update each doc sprint. |
 | `docs/ISOLATION_MODES.md` | DRAFT | 88% | Comprehensive mode model, invariants, blast radius, and open questions. |
@@ -39,11 +39,12 @@ It is used to:
 | `docs/SECRETS_MANAGEMENT.md` | DRAFT | 91% | Contractual secrets policy now defined with boundaries, incident handling, and cross-doc authority. |
 | `docs/DATA_LIFECYCLE.md` | DRAFT | 90% | Data ownership boundaries, retention/deletion lifecycle, and store-vs-platform responsibilities are now defined. |
 | `docs/INTEGRATION_MODEL.md` | DRAFT | 90% | Integration directionality, ownership boundaries, and security/isolation constraints are now defined. |
-| `docs/STORE_FRONTEND_UX.md` | DRAFT | 90% | Conceptual storefront UX journeys, surfaces, and customer interaction boundaries are now defined. |
+| `docs/STORE_FRONTEND_UX.md` | DRAFT | 92% | Checkout model includes physical-cart shipping requirements and registered-customer scope now explicitly includes registration support. |
+| `docs/STOREFRONT_FUNCTIONALITY_MATRIX.md` | DRAFT | 95% | Magento baseline storefront capability matrix now tracks parity coverage plus active next-step queue (cart mutations, checkout fallback, end-to-end smoke, and error mapping docs). |
 | `docs/ADMIN_UX.md` | DRAFT | 90% | Conceptual store-admin workflows, boundaries, and separation from platform operations are now defined. |
 | `docs/PRODUCT_MODEL.md` | DRAFT | 90% | Conceptual product/variant/pricing/inventory model and boundaries are now explicitly defined. |
-| `docs/FRONTEND_ARCHITECTURE.md` | DRAFT | 96% | Frontend boundaries now include canonical pagination URL rules (`/page/<n>`), permanent alias redirects, and explicit SEO verification linkage to LOCAL_EXECUTION_FLOW. |
-| `docs/GRAPHQL_CONTRACTS.md` | DRAFT | 91% | GraphQL boundary categories, isolation/security exposure rules, and mutation constraints are now contractually defined. |
+| `docs/FRONTEND_ARCHITECTURE.md` | DRAFT | 97% | Frontend boundaries now include canonical pagination URL rules, SEO verification linkage, and runtime-resolved theme profile handling in the application shell. |
+| `docs/GRAPHQL_CONTRACTS.md` | DRAFT | 93% | Checkout contract covers shipping address/method ordering; customer-session contract now includes registration operation category. |
 | `docs/CONTROL_PLANE_OVERVIEW.md` | DRAFT | 90% | Conceptual/structural Control Plane boundaries, interaction model, and non-responsibilities are now explicitly defined. |
 | `docs/SHOP_AGENT_API.md` | DRAFT | 93% | Contractual Shop Agent API now includes documented implemented auth profile (protected endpoints with signed short-lived token validation). |
 | `docs/CI_CD_OVERVIEW.md` | DRAFT | 90% | Contractual CI/CD model now defines invariants, gates, traceability, and environment boundaries. |
@@ -52,9 +53,9 @@ It is used to:
 | `docs/INSTALLATION.md` | DRAFT | 92% | Installation contract now cross-links command-level execution traceability to LOCAL_EXECUTION_FLOW while preserving phase guarantees. |
 | `docs/DOCKER_ORCHESTRATION_MODEL.md` | DRAFT | 90% | Container orchestration boundaries, unit types, and isolation-preserving lifecycle rules are now defined. |
 | `docs/OBSERVABILITY_MODEL.md` | DRAFT | 91% | Required health/log/metric/trace/audit signals and platform-vs-store visibility boundaries are now defined. |
-| `docs/IMPLEMENTATION_ROADMAP.md` | DRAFT | 92% | Roadmap now includes concrete Phase 3 immediate execution checklist in addition to phase sequencing and milestones. |
+| `docs/IMPLEMENTATION_ROADMAP.md` | DRAFT | 97% | Phase 4 tracker now includes current active stage snapshot and account/password/address hardening progress, with remaining parity and smoke tasks explicitly listed. |
 | `docs/TECH_DEBT.md` | DRAFT | 90% | Technical debt register established with prioritized bootstrap/security/isolation follow-up items. |
-| `docs/LOCAL_EXECUTION_FLOW.md` | DRAFT | 98% | Execution steps now include storefront technical-SEO verification flow (canonical pagination redirects, robots/sitemap checks, product metadata/schema validation) and per-instance `STOREFRONT_ENABLED` toggle behavior for Magento-frontend fallback. |
+| `docs/LOCAL_EXECUTION_FLOW.md` | DRAFT | 99% | Execution steps now include full-stack rebuild path and storefront dev-container hot-reload behavior in addition to checkout/order/theme validation flows. |
 | `docs/RUNBOOK.md` | DRAFT | 89% | Operational contract now defines incident categories, response boundaries, and prohibited operator actions. |
 | `docs/SECURITY_MODEL.md` | DRAFT | 89% | Contractual trust boundaries, threat model, and security control relationships are now defined. |
 | `docs/SECURITY_THREAT_MODEL.md` | DRAFT | 91% | Platform-wide threat classes and required mitigations now align with PCI/OWASP baseline and component boundaries. |
@@ -69,7 +70,7 @@ It is used to:
 ## 4. Overall Score
 
 - Current overall documentation completeness: **90%**
-- Documents with non-zero completeness: **38 / 38**
+- Documents with non-zero completeness: **39 / 39**
 - Highest-priority gaps: none
 - Cross-reference gaps to close: none currently detected among completed core governance docs
 

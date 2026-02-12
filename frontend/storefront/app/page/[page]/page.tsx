@@ -5,6 +5,7 @@ import { parsePageParam } from "@/src/lib/commerce/pagination";
 
 type CatalogPageRouteProps = {
   params: Promise<{ page: string }>;
+  searchParams?: Promise<{ q?: string | string[] }>;
 };
 
 export async function generateMetadata({ params }: CatalogPageRouteProps): Promise<Metadata> {
@@ -28,9 +29,12 @@ export async function generateMetadata({ params }: CatalogPageRouteProps): Promi
   };
 }
 
-export default async function CatalogPageRoute({ params }: CatalogPageRouteProps) {
+export default async function CatalogPageRoute({ params, searchParams }: CatalogPageRouteProps) {
   const resolvedParams = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const parsedPage = parsePageParam(resolvedParams.page);
+  const rawQuery = resolvedSearchParams?.q;
+  const searchTerm = Array.isArray(rawQuery) ? (rawQuery[0] ?? "") : (rawQuery ?? "");
 
   if (parsedPage === null) {
     notFound();
@@ -40,5 +44,5 @@ export default async function CatalogPageRoute({ params }: CatalogPageRouteProps
     permanentRedirect("/");
   }
 
-  return <CatalogPageView page={parsedPage} />;
+  return <CatalogPageView page={parsedPage} searchTerm={searchTerm} />;
 }

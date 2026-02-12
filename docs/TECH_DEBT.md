@@ -32,6 +32,8 @@ It is used to:
 | TD-005 | Add automated dual-store smoke check in CI for isolation confidence. | High | Near-term | Verifies two instances can run concurrently without interference. |
 | TD-006 | Define Magento compatibility matrix (Magento/PHP/Search/DB) as enforceable checks. | Medium | Mid-term | Reduce upgrade/setup breakage. |
 | TD-007 | Improve bootstrap observability summary output (instance URLs + health hints). | Low | Mid-term | Faster local triage and onboarding. |
+| TD-008 | Implement storefront product reviews parity with Magento customer flows. | Medium | Near-term | Support review list display, review submission, and product-page review signals. |
+| TD-009 | Implement storefront product comparison parity with Magento compare flows. | Medium | Near-term | Support add/remove compare actions and compare results page in storefront UX. |
 
 ## 4. Relationship to Other Documents
 

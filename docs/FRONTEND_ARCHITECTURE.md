@@ -72,6 +72,7 @@ The Application Shell:
 
 - bootstraps the frontend application,
 - defines global providers and configuration,
+- resolves the active storefront design profile from runtime config/cookie context,
 - establishes global error boundaries.
 
 The shell:

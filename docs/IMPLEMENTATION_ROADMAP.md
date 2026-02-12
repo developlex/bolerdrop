@@ -116,6 +116,39 @@ Exit criteria:
 - storefront reaches backend via documented GraphQL boundary
 - no backend-internal direct access from frontend
 
+#### Phase 4 Execution Tracker (Current)
+
+Current stage:
+
+- Phase 4 is active and in parity-hardening mode.
+- Core catalog/cart/checkout/account/wishlist/newsletter surfaces are runnable.
+- Remaining work is focused on cart mutation parity, checkout edge-case hardening, and end-to-end smoke coverage.
+
+Completed:
+
+- [x] Catalog listing and product detail routes wired through the GraphQL boundary.
+- [x] Cart creation/add/read flows implemented with server actions and cart cookie scoping.
+- [x] Customer sign-in/account read/sign-out flow wired through GraphQL token boundary.
+- [x] Checkout readiness gate implemented for payment + shipping preconditions.
+- [x] Guest checkout action now supports physical-cart shipping address + shipping method capture.
+- [x] Order confirmation route added with structured order summary surface.
+- [x] Customer registration flow implemented with account creation + auth handoff.
+- [x] Customer account parity expanded (profile edit, password change, address CRUD, newsletter preferences, order history/detail, wishlist management).
+- [x] Password UX aligned to Magento baseline for registration/account password forms (strength indicator, trim-aware minimum-length validation, visibility toggle controls).
+- [x] Address mutation payload handling aligned to Magento GraphQL input expectations (structured input object + optional region handling).
+- [x] Account server-action redirect handling hardened so successful Magento writes return success state instead of false service-failure messages.
+- [x] Address save flow now resolves Magento `region_id` from country-region metadata to satisfy strict country/state validation requirements.
+- [x] Password change flow now includes a token-based verification fallback for Magento false-negative internal-error responses.
+- [x] Extension-injected attribute hydration noise (browser password managers) is suppressed on account form surfaces.
+
+Needs to be done next:
+
+- [ ] Persist and reuse a validated shipping profile for returning sessions.
+- [ ] Implement cart mutation controls (update quantity + remove item).
+- [ ] Add integration smoke check covering product -> cart -> checkout placement path.
+- [ ] Add checkout fallback UX for carts where no shipping methods are returned.
+- [ ] Add explicit GraphQL error-code mapping table for checkout failures in docs.
+
 ### Phase 5 - CI/CD and Smoke-Gated Delivery
 
 Deliver:
