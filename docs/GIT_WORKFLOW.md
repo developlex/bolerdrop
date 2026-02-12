@@ -49,6 +49,50 @@ Promotion flow to production branches:
 
 Direct commits to `main` and `master` are forbidden.
 
+## 3.1 Conflict Prevention Routine (Mandatory)
+
+To avoid repetitive PR conflicts and oversized diffs, the following routines are mandatory.
+
+### Dev Branch Alignment Routine
+
+After every merge to `main`, align `dev` to `main` immediately:
+
+```bash
+make sync-dev
+```
+
+Equivalent explicit commands:
+
+```bash
+git fetch origin --prune
+git checkout dev
+git reset --hard origin/main
+git push --force-with-lease origin dev
+```
+
+This keeps `dev` and `main` in lockstep and prevents accumulated cross-branch drift.
+
+### Feature Branch Pre-Push Routine
+
+Before pushing a feature/fix branch, rebase it onto `main` with local-safety steps:
+
+```bash
+git stash push -u -m "pre-rebase"
+git fetch origin --prune
+git rebase origin/main
+git stash pop
+```
+
+If conflicts occur:
+
+1. resolve conflict files,
+2. `git add <resolved-files>`,
+3. continue rebase with `git rebase --continue` (if rebase is active),
+4. run required tests/checks,
+5. push with `--force-with-lease` if branch history changed.
+
+For README-only or small docs changes, branch from `main` directly instead of `dev`.
+
 ## 4. Pull Request Rules
 
 Every change must go through PR.

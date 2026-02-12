@@ -5,7 +5,7 @@ START_INDEX ?= 1
 NO_INSTALL ?= 0
 NO_CONTROL_PLANE ?= 0
 
-.PHONY: cp-up cp-down cp-health cp-logs platform-bootstrap platform-provision
+.PHONY: cp-up cp-down cp-health cp-logs platform-bootstrap platform-provision sync-dev
 
 cp-up:
 	docker compose -f control-plane/docker-compose.yml up -d --build
@@ -24,3 +24,9 @@ platform-bootstrap:
 
 platform-provision:
 	bash infra/scripts/bootstrap-platform.sh --count $(INSTANCES) --start-index $(START_INDEX) --provision-only
+
+sync-dev:
+	git fetch origin --prune
+	git checkout dev
+	git reset --hard origin/main
+	git push --force-with-lease origin dev
