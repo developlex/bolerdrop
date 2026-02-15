@@ -1,28 +1,54 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { CatalogPageSizeSelect } from "@/src/components/catalog-page-size-select";
 import { ProductCard } from "@/src/components/product-card";
 import { getCatalogPage } from "@/src/lib/commerce/catalog";
 import { CommerceError } from "@/src/lib/commerce/client";
-import { getCatalogPageHref } from "@/src/lib/commerce/pagination";
+import { getCustomerWishlist } from "@/src/lib/commerce/customer";
+import { DEFAULT_PAGE_SIZE, getCatalogPageHref } from "@/src/lib/commerce/pagination";
 import { ui } from "@/src/ui/styles";
 
 type CatalogPageViewProps = {
   page: number;
   searchTerm?: string;
+  pageSize?: number;
 };
 
-function buildCatalogHref(page: number, searchTerm: string): string {
+function buildCatalogHref(page: number, searchTerm: string, pageSize: number): string {
   const base = getCatalogPageHref(page);
-  const normalizedSearch = searchTerm.trim();
-  if (!normalizedSearch) {
-    return base;
+  const params = new URLSearchParams();
+  const normalizedSearch = searchTerm.trim().replace(/\s+/g, " ");
+
+  if (normalizedSearch) {
+    params.set("q", normalizedSearch);
   }
-  const params = new URLSearchParams({ q: normalizedSearch });
-  return `${base}?${params.toString()}`;
+  if (pageSize !== DEFAULT_PAGE_SIZE) {
+    params.set("size", String(pageSize));
+  }
+
+  const query = params.toString();
+  return query ? `${base}?${query}` : base;
 }
 
-export async function CatalogPageView({ page, searchTerm = "" }: CatalogPageViewProps) {
+export async function CatalogPageView({ page, searchTerm = "", pageSize = DEFAULT_PAGE_SIZE }: CatalogPageViewProps) {
   try {
-    const catalog = await getCatalogPage(12, page, searchTerm);
+    const catalog = await getCatalogPage(pageSize, page, searchTerm);
+    const wishlistSkus = new Set<string>();
+    try {
+      const cookieStore = await cookies();
+      const token = cookieStore.get("customer_token")?.value;
+      if (token) {
+        const wishlist = await getCustomerWishlist(token, 100, 1);
+        for (const item of wishlist?.items ?? []) {
+          const sku = item.product?.sku?.trim().toLowerCase();
+          if (sku) {
+            wishlistSkus.add(sku);
+          }
+        }
+      }
+    } catch {
+      // Wishlist preloading is best-effort for catalog hearts.
+    }
     const prevPage = Math.max(1, catalog.currentPage - 1);
     const nextPage = Math.min(catalog.totalPages, catalog.currentPage + 1);
 
@@ -44,11 +70,12 @@ export async function CatalogPageView({ page, searchTerm = "" }: CatalogPageView
                 className={ui.form.input}
                 placeholder="Search catalog..."
               />
+              {pageSize !== DEFAULT_PAGE_SIZE ? <input type="hidden" name="size" value={String(pageSize)} /> : null}
               <button type="submit" className={ui.action.buttonPrimary}>
                 Search
               </button>
               {searchTerm ? (
-                <Link href="/" className={ui.action.buttonSecondary}>
+                <Link href={buildCatalogHref(1, "", pageSize)} className={ui.action.buttonSecondary}>
                   Reset
                 </Link>
               ) : null}
@@ -85,15 +112,16 @@ export async function CatalogPageView({ page, searchTerm = "" }: CatalogPageView
             {searchTerm ? (
               <p className={ui.text.subtitle + " mt-1"}>
                 Search: "{searchTerm}" ·{" "}
-                <Link href="/" className={ui.text.link}>
+                <Link href={buildCatalogHref(1, "", pageSize)} className={ui.text.link}>
                   Back to full catalog
                 </Link>
               </p>
             ) : null}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <CatalogPageSizeSelect searchTerm={searchTerm} pageSize={pageSize} />
             <Link
-              href={buildCatalogHref(prevPage, searchTerm)}
+              href={buildCatalogHref(prevPage, searchTerm, pageSize)}
               aria-disabled={!catalog.hasPreviousPage}
               className={`${ui.action.buttonSecondary} ${catalog.hasPreviousPage ? "" : "pointer-events-none opacity-50"}`}
             >
@@ -103,7 +131,7 @@ export async function CatalogPageView({ page, searchTerm = "" }: CatalogPageView
               Page {catalog.currentPage} / {catalog.totalPages}
             </span>
             <Link
-              href={buildCatalogHref(nextPage, searchTerm)}
+              href={buildCatalogHref(nextPage, searchTerm, pageSize)}
               aria-disabled={!catalog.hasNextPage}
               className={`${ui.action.buttonSecondary} ${catalog.hasNextPage ? "" : "pointer-events-none opacity-50"}`}
             >
@@ -119,7 +147,11 @@ export async function CatalogPageView({ page, searchTerm = "" }: CatalogPageView
         ) : (
           <div className={`${ui.grid.catalog} stagger-grid`}>
             {catalog.products.map((product) => (
-              <ProductCard key={product.id || product.sku} product={product} />
+              <ProductCard
+                key={product.id || product.sku}
+                product={product}
+                isInWishlist={wishlistSkus.has(product.sku.trim().toLowerCase())}
+              />
             ))}
           </div>
         )}

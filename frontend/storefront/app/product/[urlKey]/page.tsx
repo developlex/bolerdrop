@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { addToCartAction } from "@/app/actions/cart";
 import { addToWishlistAction } from "@/app/actions/wishlist";
+import { WishlistFlashCleaner } from "@/src/components/wishlist-flash-cleaner";
 import { getProductByUrlKey } from "@/src/lib/commerce/catalog";
-import { absoluteStorefrontUrl, toMetaDescription } from "@/src/lib/seo";
+import { getCustomerWishlist } from "@/src/lib/commerce/customer";
+import { absoluteStorefrontUrl, stripSourceTagsFromHtml, toMetaDescription } from "@/src/lib/seo";
 import { ui } from "@/src/ui/styles";
 
 type SearchParams = {
@@ -23,6 +26,9 @@ function resolveWishlistMessage(searchParams?: SearchParams): { type: "success" 
   const wishlistState = firstValue(searchParams?.wishlist);
   if (wishlistState === "added") {
     return { type: "success", text: "Product added to wish list." };
+  }
+  if (wishlistState === "already") {
+    return { type: "success", text: "Product is already in your wish list." };
   }
   const errorCode = firstValue(searchParams?.error);
   if (!errorCode) {
@@ -62,7 +68,9 @@ export async function generateMetadata({
   }
 
   const canonicalPath = `/product/${encodeURIComponent(product.urlKey)}`;
-  const description = toMetaDescription(product.shortDescriptionHtml) ?? toMetaDescription(product.descriptionHtml);
+  const sanitizedShortDescriptionHtml = stripSourceTagsFromHtml(product.shortDescriptionHtml);
+  const sanitizedDescriptionHtml = stripSourceTagsFromHtml(product.descriptionHtml);
+  const description = toMetaDescription(sanitizedShortDescriptionHtml) ?? toMetaDescription(sanitizedDescriptionHtml);
 
   return {
     title: `${product.name} | BoilerDrop Storefront`,
@@ -103,6 +111,22 @@ export default async function ProductPage({
     notFound();
   }
 
+  const cookieStore = await cookies();
+  const customerToken = cookieStore.get("customer_token")?.value;
+  let isInWishlist = false;
+  if (customerToken) {
+    try {
+      const wishlist = await getCustomerWishlist(customerToken, 100, 1);
+      const normalizedSku = product.sku.trim().toLowerCase();
+      isInWishlist = Boolean(
+        wishlist?.items.some((item) => (item.product?.sku ?? "").trim().toLowerCase() === normalizedSku)
+      );
+    } catch {
+      isInWishlist = false;
+    }
+  }
+
+  const sanitizedDescriptionHtml = stripSourceTagsFromHtml(product.descriptionHtml);
   const productCanonicalPath = `/product/${encodeURIComponent(product.urlKey)}`;
   const productSchema = {
     "@context": "https://schema.org",
@@ -111,7 +135,7 @@ export default async function ProductPage({
     sku: product.sku,
     url: absoluteStorefrontUrl(productCanonicalPath),
     image: product.imageUrl ? [absoluteStorefrontUrl(product.imageUrl)] : undefined,
-    description: toMetaDescription(product.descriptionHtml) ?? undefined,
+    description: toMetaDescription(sanitizedDescriptionHtml) ?? undefined,
     offers: product.price !== null && product.currency
       ? {
           "@type": "Offer",
@@ -125,6 +149,7 @@ export default async function ProductPage({
 
   return (
     <article className="space-y-6">
+      <WishlistFlashCleaner />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
@@ -157,26 +182,24 @@ export default async function ProductPage({
             <h1 className="font-[family-name:var(--font-display)] text-2xl leading-tight tracking-tight text-ink sm:text-3xl">
               {product.name}
             </h1>
-            <p className={ui.text.link}>SKU: {product.sku}</p>
+            <p className={ui.text.subtitle + " mt-1"}>SKU: {product.sku}</p>
 
-            <div className="grid grid-cols-1 gap-2 border-y border-black/10 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-              <p className={ui.text.price + " whitespace-nowrap"}>
-                {product.price !== null && product.currency ? `${product.currency} ${product.price.toFixed(2)}` : "Price unavailable"}
-              </p>
-              <div className="text-left sm:justify-self-end sm:text-right">
-                <p className={ui.text.value}>In stock</p>
+            <div className="border-y border-black/10 py-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+                <div>
+                  <p className={ui.text.price + " whitespace-nowrap"}>
+                    {product.price !== null && product.currency ? `${product.currency} ${product.price.toFixed(2)}` : "Price unavailable"}
+                  </p>
+                </div>
+                <div className="text-left sm:justify-self-end sm:text-right">
+                  <p className={ui.text.value}>In stock</p>
+                </div>
               </div>
             </div>
-            {wishlistMessage ? (
-              <p className={(wishlistMessage.type === "success" ? ui.state.success : ui.state.warning) + " mt-3"}>
-                {wishlistMessage.text}
-              </p>
-            ) : null}
-
-            <div className="mt-auto space-y-3 pt-4">
-              <form action={addToCartAction} className="flex flex-wrap items-end gap-2">
-                <input type="hidden" name="sku" value={product.sku} />
-                <label className="text-sm">
+            <form action={addToCartAction} className="mt-3">
+              <input type="hidden" name="sku" value={product.sku} />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+                <label className="block text-sm">
                   <span className={ui.text.label + " mb-1 block"}>Qty</span>
                   <input
                     type="number"
@@ -186,19 +209,42 @@ export default async function ProductPage({
                     className={ui.form.inputCompact + " w-20"}
                   />
                 </label>
-                <button type="submit" className={ui.action.buttonPrimary}>
-                  Add to cart
-                </button>
-              </form>
+                <div className="text-left sm:justify-self-end sm:text-right">
+                  <button type="submit" className={ui.action.buttonPrimary + " w-full sm:w-auto"}>
+                    Add to cart
+                  </button>
+                </div>
+              </div>
+            </form>
+            {wishlistMessage ? (
+              <p className={(wishlistMessage.type === "success" ? ui.state.success : ui.state.warning) + " mt-3"}>
+                {wishlistMessage.text}
+              </p>
+            ) : null}
 
-              <form action={addToWishlistAction}>
-                <input type="hidden" name="sku" value={product.sku} />
-                <input type="hidden" name="quantity" value="1" />
-                <input type="hidden" name="return_to" value={`/product/${product.urlKey}`} />
-                <button type="submit" className={ui.action.buttonSecondary}>
-                  Add to wish list
-                </button>
-              </form>
+            <div className="mt-auto space-y-2 pt-3">
+              {isInWishlist ? (
+                <p className="flex justify-end text-sm font-medium text-ember">
+                  <span className="inline-flex items-center gap-1">
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                      <path d="M12 21s-6.5-4.1-9.1-7.5C.8 10.9 1.3 6.9 4.6 5.1c2.1-1.1 4.8-.5 6.4 1.4 1.6-1.9 4.3-2.5 6.4-1.4 3.3 1.8 3.8 5.8 1.7 8.4C18.5 16.9 12 21 12 21z" />
+                    </svg>
+                    In your wish list
+                  </span>
+                </p>
+              ) : (
+                <form action={addToWishlistAction} className="flex justify-end">
+                  <input type="hidden" name="sku" value={product.sku} />
+                  <input type="hidden" name="quantity" value="1" />
+                  <input type="hidden" name="return_to" value={`/product/${product.urlKey}`} />
+                  <button type="submit" className="inline-flex items-center gap-1 text-sm font-medium text-ember transition-colors hover:text-ocean hover:no-underline">
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                      <path d="M12 21s-6.5-4.1-9.1-7.5C.8 10.9 1.3 6.9 4.6 5.1c2.1-1.1 4.8-.5 6.4 1.4 1.6-1.9 4.3-2.5 6.4-1.4 3.3 1.8 3.8 5.8 1.7 8.4C18.5 16.9 12 21 12 21z" />
+                    </svg>
+                    Add to wish list
+                  </button>
+                </form>
+              )}
             </div>
           </div>
         </div>
@@ -206,8 +252,8 @@ export default async function ProductPage({
 
       <section className={ui.surface.panel}>
         <h2 className={ui.text.value}>Details</h2>
-        {product.descriptionHtml ? (
-          <div className={ui.misc.prose + " mt-3"} dangerouslySetInnerHTML={{ __html: product.descriptionHtml }} />
+        {sanitizedDescriptionHtml ? (
+          <div className={ui.misc.prose + " mt-3"} dangerouslySetInnerHTML={{ __html: sanitizedDescriptionHtml }} />
         ) : (
           <p className={ui.text.subtitle + " mt-3"}>No product details available.</p>
         )}

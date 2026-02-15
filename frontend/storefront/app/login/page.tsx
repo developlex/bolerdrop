@@ -27,12 +27,14 @@ export function resolveLoginErrorMessage(searchParams?: SearchParams): string | 
   if (!errorCode) {
     return null;
   }
+  if (errorCode === "session-expired") {
+    return null;
+  }
 
   const byCode: Record<string, string> = {
     "missing-credentials": "Email and password are required.",
     "invalid-credentials": "Sign-in failed. Check your credentials and try again.",
     "auth-unavailable": "Sign-in service is currently unavailable. Try again in a moment.",
-    "session-expired": "Your session expired. Sign in again to continue.",
     "wishlist-auth": "Sign in to add products to your wish list."
   };
 

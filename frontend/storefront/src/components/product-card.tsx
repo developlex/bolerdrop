@@ -1,11 +1,24 @@
 import Link from "next/link";
-import { addToWishlistAction } from "@/app/actions/wishlist";
+import { addToCartAction } from "@/app/actions/cart";
+import { WishlistToggleButton } from "@/src/components/wishlist-toggle-button";
 import type { CatalogProduct } from "@/src/lib/commerce/types";
 import { ui } from "@/src/ui/styles";
 
-export function ProductCard({ product }: { product: CatalogProduct }) {
+type ProductCardProps = {
+  product: CatalogProduct;
+  isInWishlist?: boolean;
+};
+
+export function ProductCard({ product, isInWishlist = false }: ProductCardProps) {
   return (
-    <article className={ui.surface.card + " flex h-full flex-col"}>
+    <article className={ui.surface.card + " relative flex h-full flex-col"}>
+      <div className="absolute right-3 top-3 z-10">
+        <WishlistToggleButton
+          sku={product.sku}
+          productName={product.name}
+          initialInWishlist={isInWishlist}
+        />
+      </div>
       <Link href={`/product/${product.urlKey}`} className="no-underline hover:no-underline">
         <div className="mb-3 aspect-[4/3] overflow-hidden rounded-xl bg-sand">
           {product.imageUrl ? (
@@ -24,15 +37,11 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
         {product.price !== null && product.currency ? `${product.currency} ${product.price.toFixed(2)}` : "Price unavailable"}
       </p>
       <div className="mt-auto pt-4">
-        <Link href={`/product/${product.urlKey}`} className={ui.action.buttonPrimary + " w-full"}>
-          View product
-        </Link>
-        <form action={addToWishlistAction} className="mt-2">
+        <form action={addToCartAction}>
           <input type="hidden" name="sku" value={product.sku} />
           <input type="hidden" name="quantity" value="1" />
-          <input type="hidden" name="return_to" value="/account/wishlist" />
-          <button type="submit" className={ui.action.buttonSecondary + " w-full"}>
-            Add to wish list
+          <button type="submit" className={ui.action.buttonPrimary + " w-full"}>
+            Add to cart
           </button>
         </form>
       </div>

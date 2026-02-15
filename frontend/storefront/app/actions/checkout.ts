@@ -4,8 +4,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { CommerceError } from "@/src/lib/commerce/client";
 import { US_COUNTRY_CODE } from "@/src/lib/forms/us-states";
-import { getCheckoutReadiness, placeGuestOrder, setShippingAddressOnCart } from "@/src/lib/commerce/cart";
-import type { PlaceGuestOrderInput, ShippingAddressInput, ShippingMethodInput } from "@/src/lib/commerce/types";
+import { getCheckoutReadiness, placeGuestOrder, setShippingAddressOnCart, setShippingMethodOnCart } from "@/src/lib/commerce/cart";
+import { getCustomerDashboard, getCustomerProfile } from "@/src/lib/commerce/customer";
+import type { CustomerAddress, PlaceGuestOrderInput, ShippingAddressInput, ShippingMethodInput } from "@/src/lib/commerce/types";
 
 function looksLikeEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -13,7 +14,7 @@ function looksLikeEmail(value: string): boolean {
 
 function checkoutRedirect(params: Record<string, string>): never {
   const query = new URLSearchParams(params);
-  redirect(`/cart?${query.toString()}`);
+  redirect(`/checkout?${query.toString()}`);
 }
 
 function confirmationRedirect(orderNumber: string): never {
@@ -37,6 +38,39 @@ function parseShippingMethod(input: string): ShippingMethodInput | null {
   }
 
   return { carrierCode, methodCode };
+}
+
+function parseAddressId(value: string | null): number | null {
+  if (!value) {
+    return null;
+  }
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function resolveDefaultShippingAddress(addresses: CustomerAddress[], defaultShippingId: string | null): CustomerAddress | null {
+  const parsedDefaultId = parseAddressId(defaultShippingId);
+  if (parsedDefaultId !== null) {
+    const byId = addresses.find((address) => Number(address.id) === parsedDefaultId);
+    if (byId) {
+      return byId;
+    }
+  }
+  return addresses.find((address) => address.defaultShipping) ?? null;
+}
+
+function toShippingAddressInput(address: CustomerAddress): ShippingAddressInput {
+  const street = address.street.filter((line) => line.trim().length > 0);
+  return {
+    firstname: address.firstname,
+    lastname: address.lastname,
+    street: street.length > 0 ? street : [""],
+    city: address.city,
+    postcode: address.postcode,
+    countryCode: address.countryCode,
+    telephone: address.telephone,
+    region: address.regionCode ?? address.region
+  };
 }
 
 function readShippingAddress(formData: FormData): ShippingAddressInput | null {
@@ -106,12 +140,24 @@ function shippingMethodExists(
 export async function placeOrderAction(formData: FormData): Promise<void> {
   const cookieStore = await cookies();
   const cartId = cookieStore.get("cart_id")?.value;
+  const customerToken = cookieStore.get("customer_token")?.value;
 
   if (!cartId) {
     checkoutRedirect({ checkout: "error", reason: "missing-cart" });
   }
 
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  let email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (customerToken) {
+    try {
+      const customerProfile = await getCustomerProfile(customerToken);
+      const profileEmail = customerProfile.email.trim().toLowerCase();
+      if (profileEmail) {
+        email = profileEmail;
+      }
+    } catch {
+      // Fall back to submitted email if customer session is stale.
+    }
+  }
   const paymentMethodCode = String(formData.get("payment_method") ?? "").trim();
 
   if (!looksLikeEmail(email)) {
@@ -128,14 +174,29 @@ export async function placeOrderAction(formData: FormData): Promise<void> {
     let readinessForGate = readiness;
 
     if (!readiness.isVirtual) {
-      const shippingAddress = readShippingAddress(formData);
-      if (!shippingAddress) {
+      const shippingAddressFromForm = readShippingAddress(formData);
+      let addressApplied = false;
+      if (shippingAddressFromForm) {
+        await setShippingAddressOnCart(cartId, shippingAddressFromForm);
+        addressApplied = true;
+      } else if (customerToken) {
+        try {
+          const dashboard = await getCustomerDashboard(customerToken);
+          const defaultShippingAddress = resolveDefaultShippingAddress(dashboard.addresses, dashboard.defaultShippingId);
+          if (defaultShippingAddress) {
+            await setShippingAddressOnCart(cartId, toShippingAddressInput(defaultShippingAddress));
+            addressApplied = true;
+          }
+        } catch {
+          addressApplied = false;
+        }
+      }
+
+      if (!addressApplied) {
         checkoutRedirect({ checkout: "error", reason: "invalid-shipping-address" });
       }
 
-      await setShippingAddressOnCart(cartId, shippingAddress);
       const readinessAfterAddress = await getCheckoutReadiness(cartId);
-      readinessForGate = readinessAfterAddress;
 
       const requestedShippingMethod = parseShippingMethod(String(formData.get("shipping_method") ?? ""));
       shippingMethod = resolveShippingMethod(
@@ -154,6 +215,11 @@ export async function placeOrderAction(formData: FormData): Promise<void> {
       ) {
         checkoutRedirect({ checkout: "error", reason: "invalid-shipping-method" });
       }
+
+      if (requestedShippingMethod || !readinessAfterAddress.selectedShippingMethod) {
+        await setShippingMethodOnCart(cartId, shippingMethod);
+      }
+      readinessForGate = await getCheckoutReadiness(cartId);
     }
 
     const ignoredReasons = new Set<string>(["Guest email is required before placing order."]);

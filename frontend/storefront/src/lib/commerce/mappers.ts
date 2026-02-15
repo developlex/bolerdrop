@@ -60,6 +60,10 @@ function mapCartItem(item: MagentoCartItemNode) {
     uid: String(item?.uid ?? ""),
     sku: String(item?.product?.sku ?? ""),
     name: String(item?.product?.name ?? ""),
+    imageUrl: typeof item?.product?.small_image?.url === "string" ? item.product.small_image.url : null,
+    urlKey: typeof item?.product?.url_key === "string" && item.product.url_key.trim().length > 0
+      ? item.product.url_key
+      : null,
     quantity: Number(item?.quantity ?? 0),
     lineTotal: rowTotal.value,
     currency: rowTotal.currency

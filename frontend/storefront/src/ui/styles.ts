@@ -59,6 +59,6 @@ export const ui = {
   },
   misc: {
     prose:
-      "mt-6 max-w-none text-sm leading-relaxed text-steel [&_a]:text-ember [&_h2]:mt-6 [&_h2]:font-[family-name:var(--font-display)] [&_h2]:text-xl [&_h2]:text-ink [&_li]:mb-1 [&_p]:mb-3"
+      "mt-6 max-w-none text-sm leading-relaxed text-steel [&_a]:text-ember [&_h2]:mt-6 [&_h2]:font-[family-name:var(--font-display)] [&_h2]:text-xl [&_h2]:text-ink [&_iframe]:mx-auto [&_iframe]:block [&_iframe]:w-full [&_iframe]:max-w-2xl [&_iframe]:aspect-video [&_iframe]:h-auto [&_iframe]:rounded-xl [&_iframe]:border [&_iframe]:border-black/10 [&_li]:mb-1 [&_p]:mb-3"
   }
 } as const;

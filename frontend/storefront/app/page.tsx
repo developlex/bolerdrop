@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { permanentRedirect } from "next/navigation";
 import { CatalogPageView } from "@/src/components/catalog-page-view";
-import { getCatalogPageHref, parsePageParam } from "@/src/lib/commerce/pagination";
+import { getCatalogPageHref, parsePageParam, parsePageSizeParam } from "@/src/lib/commerce/pagination";
 
 export const revalidate = 120;
 
@@ -16,6 +16,7 @@ export const metadata: Metadata = {
 type RootSearchParams = {
   page?: string | string[];
   q?: string | string[];
+  size?: string | string[];
   [key: string]: string | string[] | undefined;
 };
 
@@ -45,7 +46,9 @@ export default async function HomePage({
 }) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const rawQuery = resolvedSearchParams?.q;
+  const rawSize = resolvedSearchParams?.size;
   const searchTerm = Array.isArray(rawQuery) ? (rawQuery[0] ?? "") : (rawQuery ?? "");
+  const pageSize = parsePageSizeParam(rawSize);
 
   if (resolvedSearchParams?.page !== undefined) {
     const parsedPage = parsePageParam(resolvedSearchParams.page) ?? 1;
@@ -55,5 +58,5 @@ export default async function HomePage({
     permanentRedirect(target);
   }
 
-  return <CatalogPageView page={1} searchTerm={searchTerm} />;
+  return <CatalogPageView page={1} searchTerm={searchTerm} pageSize={pageSize} />;
 }

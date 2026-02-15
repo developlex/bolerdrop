@@ -17,7 +17,7 @@ test("resolveLoginErrorMessage maps known errors", () => {
   );
   assert.equal(
     resolveLoginErrorMessage({ error: "session-expired" }),
-    "Your session expired. Sign in again to continue.",
+    null,
   );
   assert.equal(
     resolveLoginErrorMessage({ error: "wishlist-auth" }),
