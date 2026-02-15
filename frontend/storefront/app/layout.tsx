@@ -7,6 +7,7 @@ import { Header } from "@/src/components/header";
 import { getCart } from "@/src/lib/commerce/cart";
 import { getStorefrontBaseUrl } from "@/src/lib/seo";
 import { getStorefrontConfig } from "@/src/lib/config";
+import { readCartCookie } from "@/src/lib/session-cookies";
 import { getStorefrontTheme, STOREFRONT_THEME_COOKIE, normalizeStorefrontThemeId } from "@/src/themes/themes";
 import { ui } from "@/src/ui/styles";
 
@@ -48,7 +49,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const { storefrontTheme: themeFromEnv } = getStorefrontConfig();
   const storefrontThemeId = themeFromCookie ?? themeFromEnv;
   const storefrontTheme = getStorefrontTheme(storefrontThemeId);
-  const cartId = cookieStore.get("cart_id")?.value;
+  const cartId = readCartCookie(cookieStore);
 
   let cartPreview: {
     totalQuantity: number;

@@ -7,6 +7,7 @@ import { addToWishlistAction } from "@/app/actions/wishlist";
 import { WishlistFlashCleaner } from "@/src/components/wishlist-flash-cleaner";
 import { getProductByUrlKey } from "@/src/lib/commerce/catalog";
 import { getCustomerWishlist } from "@/src/lib/commerce/customer";
+import { readCustomerTokenCookie } from "@/src/lib/session-cookies";
 import { absoluteStorefrontUrl, stripSourceTagsFromHtml, toMetaDescription } from "@/src/lib/seo";
 import { ui } from "@/src/ui/styles";
 
@@ -112,7 +113,7 @@ export default async function ProductPage({
   }
 
   const cookieStore = await cookies();
-  const customerToken = cookieStore.get("customer_token")?.value;
+  const customerToken = readCustomerTokenCookie(cookieStore);
   let isInWishlist = false;
   if (customerToken) {
     try {

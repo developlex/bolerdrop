@@ -6,6 +6,7 @@ import { CommerceError } from "@/src/lib/commerce/client";
 import { US_COUNTRY_CODE } from "@/src/lib/forms/us-states";
 import { getCheckoutReadiness, placeGuestOrder, setShippingAddressOnCart, setShippingMethodOnCart } from "@/src/lib/commerce/cart";
 import { getCustomerDashboard, getCustomerProfile } from "@/src/lib/commerce/customer";
+import { deleteCartCookie, readCartCookie, readCustomerTokenCookie } from "@/src/lib/session-cookies";
 import type { CustomerAddress, PlaceGuestOrderInput, ShippingAddressInput, ShippingMethodInput } from "@/src/lib/commerce/types";
 
 function looksLikeEmail(value: string): boolean {
@@ -139,8 +140,8 @@ function shippingMethodExists(
 
 export async function placeOrderAction(formData: FormData): Promise<void> {
   const cookieStore = await cookies();
-  const cartId = cookieStore.get("cart_id")?.value;
-  const customerToken = cookieStore.get("customer_token")?.value;
+  const cartId = readCartCookie(cookieStore);
+  const customerToken = readCustomerTokenCookie(cookieStore);
 
   if (!cartId) {
     checkoutRedirect({ checkout: "error", reason: "missing-cart" });
@@ -240,7 +241,7 @@ export async function placeOrderAction(formData: FormData): Promise<void> {
     };
 
     const orderNumber = await placeGuestOrder(cartId, placeOrderInput);
-    cookieStore.delete("cart_id");
+    deleteCartCookie(cookieStore);
     confirmationRedirect(orderNumber);
   } catch (error: unknown) {
     if (error instanceof CommerceError) {

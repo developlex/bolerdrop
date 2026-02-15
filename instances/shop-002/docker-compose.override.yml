@@ -209,6 +209,7 @@ services:
       target: dev
     container_name: ${STORE_ID}-storefront
     environment:
+      STORE_ID: ${STORE_ID}
       COMMERCE_GRAPHQL_URL: http://magento-web/graphql
       STOREFRONT_BASE_URL: ${STOREFRONT_BASE_URL}
       STOREFRONT_THEME: ${STOREFRONT_THEME}

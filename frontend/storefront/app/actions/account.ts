@@ -6,6 +6,7 @@ import { CommerceError } from "@/src/lib/commerce/client";
 import { hasMinimumPasswordLength, normalizePassword, passwordsMatch } from "@/src/lib/forms/password";
 import { REGISTER_PREFILL_COOKIE, createRegisterPrefill, serializeRegisterPrefill } from "@/src/lib/forms/register";
 import { createCustomerAccount, generateCustomerToken } from "@/src/lib/commerce/customer";
+import { deleteCustomerTokenCookie, setCustomerTokenCookie } from "@/src/lib/session-cookies";
 
 function looksLikeEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -39,14 +40,14 @@ export async function loginAction(formData: FormData): Promise<void> {
   try {
     token = await generateCustomerToken(email, password);
   } catch (error: unknown) {
-    cookieStore.delete("customer_token");
+    deleteCustomerTokenCookie(cookieStore);
     if (error instanceof CommerceError) {
       redirect("/login?error=invalid-credentials");
     }
     redirect("/login?error=auth-unavailable");
   }
 
-  cookieStore.set("customer_token", token, {
+  setCustomerTokenCookie(cookieStore, token, {
     httpOnly: true,
     sameSite: "lax",
     path: "/",
@@ -57,7 +58,7 @@ export async function loginAction(formData: FormData): Promise<void> {
 
 export async function logoutAction(): Promise<void> {
   const cookieStore = await cookies();
-  cookieStore.delete("customer_token");
+  deleteCustomerTokenCookie(cookieStore);
   redirect("/");
 }
 
@@ -110,7 +111,7 @@ export async function registerAction(formData: FormData): Promise<void> {
     });
     token = await generateCustomerToken(email, password);
   } catch (error: unknown) {
-    cookieStore.delete("customer_token");
+    deleteCustomerTokenCookie(cookieStore);
     persistRegistrationPrefill();
     if (error instanceof CommerceError) {
       if (messageSuggestsExistingEmail(error.message)) {
@@ -124,7 +125,7 @@ export async function registerAction(formData: FormData): Promise<void> {
     redirect("/register?error=register-unavailable");
   }
 
-  cookieStore.set("customer_token", token, {
+  setCustomerTokenCookie(cookieStore, token, {
     httpOnly: true,
     sameSite: "lax",
     path: "/",

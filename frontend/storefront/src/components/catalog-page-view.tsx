@@ -6,6 +6,7 @@ import { getCatalogPage } from "@/src/lib/commerce/catalog";
 import { CommerceError } from "@/src/lib/commerce/client";
 import { getCustomerWishlist } from "@/src/lib/commerce/customer";
 import { DEFAULT_PAGE_SIZE, getCatalogPageHref } from "@/src/lib/commerce/pagination";
+import { readCustomerTokenCookie } from "@/src/lib/session-cookies";
 import { ui } from "@/src/ui/styles";
 
 type CatalogPageViewProps = {
@@ -36,7 +37,7 @@ export async function CatalogPageView({ page, searchTerm = "", pageSize = DEFAUL
     const wishlistSkus = new Set<string>();
     try {
       const cookieStore = await cookies();
-      const token = cookieStore.get("customer_token")?.value;
+      const token = readCustomerTokenCookie(cookieStore);
       if (token) {
         const wishlist = await getCustomerWishlist(token, 100, 1);
         for (const item of wishlist?.items ?? []) {

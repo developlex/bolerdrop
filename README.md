@@ -77,6 +77,7 @@ STOREFRONT_THEME=dropship
 - `STOREFRONT_ENABLED=1`: run decoupled storefront container
 - `STOREFRONT_ENABLED=0`: use Magento frontend only
 - supported themes: `dropship`, `sunset`
+- storefront session cookies are scoped per store instance (`STORE_ID`) to prevent cross-instance cart/auth collisions on localhost.
 
 Theme switching behavior:
 

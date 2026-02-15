@@ -1,11 +1,12 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getCustomerDashboard } from "@/src/lib/commerce/customer";
+import { readCustomerTokenCookie } from "@/src/lib/session-cookies";
 import type { CustomerDashboard } from "@/src/lib/commerce/types";
 
 export async function requireAccountToken(): Promise<string> {
   const cookieStore = await cookies();
-  const token = cookieStore.get("customer_token")?.value;
+  const token = readCustomerTokenCookie(cookieStore);
   if (!token) {
     redirect("/login");
   }
