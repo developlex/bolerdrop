@@ -1,6 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { getCheckoutReadiness, placeGuestOrder, placeOrder } from "@/src/lib/commerce/cart";
+import {
+  getCheckoutReadiness,
+  placeGuestOrder,
+  placeOrder,
+  removeCartItem,
+  updateCartItemQuantity
+} from "@/src/lib/commerce/cart";
 
 function jsonResponse(payload: unknown): Response {
   return new Response(JSON.stringify(payload), {
@@ -285,6 +291,96 @@ test("placeOrder throws when order number is missing", async () => {
       () => placeOrder("cart-1"),
       /did not return an order number/
     );
+  } finally {
+    globalThis.fetch = previousFetch;
+    if (previousGraphqlUrl === undefined) {
+      delete process.env.COMMERCE_GRAPHQL_URL;
+    } else {
+      process.env.COMMERCE_GRAPHQL_URL = previousGraphqlUrl;
+    }
+  }
+});
+
+test("updateCartItemQuantity submits updateCartItems mutation and returns mapped cart", async () => {
+  const previousFetch = globalThis.fetch;
+  const previousGraphqlUrl = process.env.COMMERCE_GRAPHQL_URL;
+  process.env.COMMERCE_GRAPHQL_URL = "http://commerce.test/graphql";
+
+  globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+    const body = typeof init?.body === "string" ? JSON.parse(init.body) as {
+      query?: string;
+      variables?: Record<string, unknown>;
+    } : {};
+    assert.ok((body.query ?? "").includes("UpdateCartItems"));
+    assert.equal(body.variables?.cartId, "cart-1");
+    assert.equal(body.variables?.cartItemUid, "item-uid-1");
+    assert.equal(body.variables?.quantity, 3);
+    return jsonResponse({
+      data: {
+        updateCartItems: {
+          cart: {
+            id: "cart-1",
+            total_quantity: 3,
+            prices: { grand_total: { value: 59.97, currency: "USD" } },
+            items: [
+              {
+                uid: "item-uid-1",
+                quantity: 3,
+                product: { sku: "sku-1", name: "Item 1" },
+                prices: { row_total: { value: 59.97, currency: "USD" } }
+              }
+            ]
+          }
+        }
+      }
+    });
+  }) as typeof fetch;
+
+  try {
+    const cart = await updateCartItemQuantity("cart-1", "item-uid-1", 3);
+    assert.equal(cart.totalQuantity, 3);
+    assert.equal(cart.items[0]?.quantity, 3);
+  } finally {
+    globalThis.fetch = previousFetch;
+    if (previousGraphqlUrl === undefined) {
+      delete process.env.COMMERCE_GRAPHQL_URL;
+    } else {
+      process.env.COMMERCE_GRAPHQL_URL = previousGraphqlUrl;
+    }
+  }
+});
+
+test("removeCartItem submits removeItemFromCart mutation and returns mapped empty cart", async () => {
+  const previousFetch = globalThis.fetch;
+  const previousGraphqlUrl = process.env.COMMERCE_GRAPHQL_URL;
+  process.env.COMMERCE_GRAPHQL_URL = "http://commerce.test/graphql";
+
+  globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+    const body = typeof init?.body === "string" ? JSON.parse(init.body) as {
+      query?: string;
+      variables?: Record<string, unknown>;
+    } : {};
+    assert.ok((body.query ?? "").includes("RemoveItemFromCart"));
+    assert.equal(body.variables?.cartId, "cart-1");
+    assert.equal(body.variables?.cartItemUid, "item-uid-1");
+    return jsonResponse({
+      data: {
+        removeItemFromCart: {
+          cart: {
+            id: "cart-1",
+            total_quantity: 0,
+            prices: { grand_total: { value: 0, currency: "USD" } },
+            items: []
+          }
+        }
+      }
+    });
+  }) as typeof fetch;
+
+  try {
+    const cart = await removeCartItem("cart-1", "item-uid-1");
+    assert.equal(cart.totalQuantity, 0);
+    assert.equal(cart.items.length, 0);
   } finally {
     globalThis.fetch = previousFetch;
     if (previousGraphqlUrl === undefined) {

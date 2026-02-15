@@ -65,7 +65,78 @@ mutation AddSimpleProductsToCart($cartId: String!, $sku: String!, $quantity: Flo
       items {
         uid
         quantity
-        product { sku name }
+        product {
+          sku
+          name
+          url_key
+          small_image { url }
+        }
+        prices {
+          row_total { value currency }
+          row_total_including_tax { value currency }
+        }
+      }
+    }
+  }
+}
+`;
+
+export const UPDATE_CART_ITEMS_MUTATION = `
+mutation UpdateCartItems($cartId: String!, $cartItemUid: ID!, $quantity: Float!) {
+  updateCartItems(
+    input: {
+      cart_id: $cartId,
+      cart_items: [{ cart_item_uid: $cartItemUid, quantity: $quantity }]
+    }
+  ) {
+    cart {
+      id
+      total_quantity
+      prices {
+        grand_total { value currency }
+      }
+      items {
+        uid
+        quantity
+        product {
+          sku
+          name
+          url_key
+          small_image { url }
+        }
+        prices {
+          row_total { value currency }
+          row_total_including_tax { value currency }
+        }
+      }
+    }
+  }
+}
+`;
+
+export const REMOVE_ITEM_FROM_CART_MUTATION = `
+mutation RemoveItemFromCart($cartId: String!, $cartItemUid: ID!) {
+  removeItemFromCart(
+    input: {
+      cart_id: $cartId,
+      cart_item_uid: $cartItemUid
+    }
+  ) {
+    cart {
+      id
+      total_quantity
+      prices {
+        grand_total { value currency }
+      }
+      items {
+        uid
+        quantity
+        product {
+          sku
+          name
+          url_key
+          small_image { url }
+        }
         prices {
           row_total { value currency }
           row_total_including_tax { value currency }
@@ -87,7 +158,12 @@ query GetCart($cartId: String!) {
     items {
       uid
       quantity
-      product { sku name }
+      product {
+        sku
+        name
+        url_key
+        small_image { url }
+      }
       prices {
         row_total { value currency }
         row_total_including_tax { value currency }
@@ -197,6 +273,29 @@ mutation SetShippingAddressesOnCart(
 }
 `;
 
+export const SET_SHIPPING_ADDRESS_FROM_CUSTOMER_ADDRESS_MUTATION = `
+mutation SetShippingAddressFromCustomerAddress($cartId: String!, $customerAddressId: Int!) {
+  setShippingAddressesOnCart(
+    input: {
+      cart_id: $cartId,
+      shipping_addresses: [{
+        customer_address_id: $customerAddressId
+      }]
+    }
+  ) {
+    cart {
+      id
+      shipping_addresses {
+        available_shipping_methods {
+          carrier_code
+          method_code
+        }
+      }
+    }
+  }
+}
+`;
+
 export const SET_SHIPPING_METHODS_ON_CART_MUTATION = `
 mutation SetShippingMethodsOnCart($cartId: String!, $carrierCode: String!, $methodCode: String!) {
   setShippingMethodsOnCart(
@@ -216,6 +315,23 @@ mutation SetShippingMethodsOnCart($cartId: String!, $carrierCode: String!, $meth
           method_code
         }
       }
+    }
+  }
+}
+`;
+
+export const SET_BILLING_ADDRESS_FROM_CUSTOMER_ADDRESS_MUTATION = `
+mutation SetBillingAddressFromCustomerAddress($cartId: String!, $customerAddressId: Int!) {
+  setBillingAddressOnCart(
+    input: {
+      cart_id: $cartId,
+      billing_address: {
+        customer_address_id: $customerAddressId
+      }
+    }
+  ) {
+    cart {
+      id
     }
   }
 }

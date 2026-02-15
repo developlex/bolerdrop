@@ -6,10 +6,14 @@ import {
   GET_CART_CHECKOUT_READINESS_QUERY,
   GET_CART_QUERY,
   PLACE_ORDER_MUTATION,
+  SET_BILLING_ADDRESS_FROM_CUSTOMER_ADDRESS_MUTATION,
+  REMOVE_ITEM_FROM_CART_MUTATION,
   SET_GUEST_EMAIL_ON_CART_MUTATION,
+  SET_SHIPPING_ADDRESS_FROM_CUSTOMER_ADDRESS_MUTATION,
   SET_PAYMENT_METHOD_ON_CART_MUTATION,
   SET_SHIPPING_ADDRESSES_ON_CART_MUTATION,
-  SET_SHIPPING_METHODS_ON_CART_MUTATION
+  SET_SHIPPING_METHODS_ON_CART_MUTATION,
+  UPDATE_CART_ITEMS_MUTATION
 } from "@/src/lib/commerce/queries";
 import type {
   CartSnapshot,
@@ -28,6 +32,18 @@ type CreateEmptyCartResponse = {
 
 type AddSimpleProductsResponse = {
   addSimpleProductsToCart: {
+    cart: MagentoCartNode;
+  };
+};
+
+type UpdateCartItemsResponse = {
+  updateCartItems: {
+    cart: MagentoCartNode;
+  };
+};
+
+type RemoveItemFromCartResponse = {
+  removeItemFromCart: {
     cart: MagentoCartNode;
   };
 };
@@ -55,6 +71,14 @@ type SetPaymentMethodResponse = {
 
 type SetShippingAddressesResponse = {
   setShippingAddressesOnCart: {
+    cart: {
+      id: string;
+    };
+  };
+};
+
+type SetBillingAddressResponse = {
+  setBillingAddressOnCart: {
     cart: {
       id: string;
     };
@@ -89,6 +113,23 @@ export async function addSimpleSkuToCart(cartId: string, sku: string, quantity: 
     quantity
   });
   return mapCart(data.addSimpleProductsToCart.cart);
+}
+
+export async function updateCartItemQuantity(cartId: string, cartItemUid: string, quantity: number): Promise<CartSnapshot> {
+  const data = await commerceGraphQL<UpdateCartItemsResponse>(UPDATE_CART_ITEMS_MUTATION, {
+    cartId,
+    cartItemUid,
+    quantity
+  });
+  return mapCart(data.updateCartItems.cart);
+}
+
+export async function removeCartItem(cartId: string, cartItemUid: string): Promise<CartSnapshot> {
+  const data = await commerceGraphQL<RemoveItemFromCartResponse>(REMOVE_ITEM_FROM_CART_MUTATION, {
+    cartId,
+    cartItemUid
+  });
+  return mapCart(data.removeItemFromCart.cart);
 }
 
 export async function getCart(cartId: string): Promise<CartSnapshot> {
@@ -205,6 +246,20 @@ export async function setShippingAddressOnCart(cartId: string, shippingAddress: 
     countryCode: shippingAddress.countryCode,
     telephone: shippingAddress.telephone,
     region: shippingAddress.region
+  });
+}
+
+export async function setShippingAddressFromCustomerAddressOnCart(cartId: string, customerAddressId: number): Promise<void> {
+  await commerceGraphQL<SetShippingAddressesResponse>(SET_SHIPPING_ADDRESS_FROM_CUSTOMER_ADDRESS_MUTATION, {
+    cartId,
+    customerAddressId
+  });
+}
+
+export async function setBillingAddressFromCustomerAddressOnCart(cartId: string, customerAddressId: number): Promise<void> {
+  await commerceGraphQL<SetBillingAddressResponse>(SET_BILLING_ADDRESS_FROM_CUSTOMER_ADDRESS_MUTATION, {
+    cartId,
+    customerAddressId
   });
 }
 

@@ -26,6 +26,8 @@ export type CartItem = {
   uid: string;
   sku: string;
   name: string;
+  imageUrl: string | null;
+  urlKey: string | null;
   quantity: number;
   lineTotal: number | null;
   currency: string | null;
@@ -254,6 +256,10 @@ export type MagentoCartItemNode = {
   product?: {
     sku?: string | null;
     name?: string | null;
+    url_key?: string | null;
+    small_image?: {
+      url?: string | null;
+    } | null;
   } | null;
   prices?: {
     row_total?: MoneyNode;

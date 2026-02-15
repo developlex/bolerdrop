@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { absoluteStorefrontUrl, htmlToPlainText, toMetaDescription } from "@/src/lib/seo";
+import { absoluteStorefrontUrl, htmlToPlainText, stripSourceTagsFromHtml, toMetaDescription } from "@/src/lib/seo";
 
 test("htmlToPlainText strips tags and compresses whitespace", () => {
   const result = htmlToPlainText("<p>Hello <strong>world</strong>   again</p>");
@@ -18,6 +18,12 @@ test("toMetaDescription truncates long descriptions", () => {
   assert.ok(description);
   assert.equal(description?.length, 160);
   assert.ok(description?.endsWith("…"));
+});
+
+test("stripSourceTagsFromHtml removes source tags paragraph", () => {
+  const input = "<p>Visible details</p><p><strong>Source tags:</strong> [\"foo\", \"bar\"]</p>";
+  const result = stripSourceTagsFromHtml(input);
+  assert.equal(result, "<p>Visible details</p>");
 });
 
 test("absoluteStorefrontUrl resolves relative paths against storefront base URL", () => {

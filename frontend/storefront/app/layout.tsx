@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { Fraunces, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/src/components/header";
+import { getCart } from "@/src/lib/commerce/cart";
 import { getStorefrontBaseUrl } from "@/src/lib/seo";
 import { getStorefrontConfig } from "@/src/lib/config";
 import { getStorefrontTheme, STOREFRONT_THEME_COOKIE, normalizeStorefrontThemeId } from "@/src/themes/themes";
@@ -47,6 +48,34 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const { storefrontTheme: themeFromEnv } = getStorefrontConfig();
   const storefrontThemeId = themeFromCookie ?? themeFromEnv;
   const storefrontTheme = getStorefrontTheme(storefrontThemeId);
+  const cartId = cookieStore.get("cart_id")?.value;
+
+  let cartPreview: {
+    totalQuantity: number;
+    grandTotal: number | null;
+    currency: string | null;
+    items: Array<{
+      uid: string;
+      name: string;
+      quantity: number;
+      lineTotal: number | null;
+      currency: string | null;
+    }>;
+  } | null = null;
+
+  if (cartId) {
+    try {
+      const cart = await getCart(cartId);
+      cartPreview = {
+        totalQuantity: cart.totalQuantity,
+        grandTotal: cart.grandTotal,
+        currency: cart.currency,
+        items: cart.items.slice(0, 4)
+      };
+    } catch {
+      cartPreview = null;
+    }
+  }
 
   return (
     <html lang="en">
@@ -56,7 +85,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         style={storefrontTheme.cssVariables as CSSProperties}
       >
         <div aria-hidden="true" className="site-noise" />
-        <Header activeThemeId={storefrontThemeId} />
+        <Header activeThemeId={storefrontThemeId} cartPreview={cartPreview} />
         <main className={`${ui.layout.shell} page-reveal`}>{children}</main>
       </body>
     </html>
