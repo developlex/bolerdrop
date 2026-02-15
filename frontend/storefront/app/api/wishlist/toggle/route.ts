@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { CommerceError } from "@/src/lib/commerce/client";
 import { addProductToWishlist, getCustomerWishlist, removeWishlistItem } from "@/src/lib/commerce/customer";
+import { readCustomerTokenCookie } from "@/src/lib/session-cookies";
 
 type ToggleWishlistRequest = {
   sku?: string;
@@ -43,7 +44,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const cookieStore = await cookies();
-  const token = cookieStore.get("customer_token")?.value;
+  const token = readCustomerTokenCookie(cookieStore);
   if (!token) {
     return NextResponse.json(
       { error: "wishlist-auth", inWishlist: false },

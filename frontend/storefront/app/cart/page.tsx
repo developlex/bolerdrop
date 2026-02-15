@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { removeCartItemAction } from "@/app/actions/cart";
 import { CartItemQuantityForm } from "@/src/components/cart-item-quantity-form";
 import { getCart } from "@/src/lib/commerce/cart";
+import { readCartCookie } from "@/src/lib/session-cookies";
 import { ui } from "@/src/ui/styles";
 
 export const metadata: Metadata = {
@@ -63,7 +64,7 @@ export default async function CartPage({
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const cartNotice = getCartNotice(resolvedSearchParams);
   const cookieStore = await cookies();
-  const cartId = cookieStore.get("cart_id")?.value;
+  const cartId = readCartCookie(cookieStore);
 
   if (!cartId) {
     return (

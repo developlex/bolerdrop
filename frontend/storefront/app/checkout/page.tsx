@@ -6,6 +6,7 @@ import { getCart, getCheckoutReadiness, setGuestEmailOnCart, setShippingAddressO
 import { getCustomerDashboard, getCustomerProfile } from "@/src/lib/commerce/customer";
 import { getCountryRegions } from "@/src/lib/commerce/directory";
 import { dedupeUsStateOptions, US_COUNTRY_CODE, US_COUNTRY_LABEL, US_STATE_OPTIONS } from "@/src/lib/forms/us-states";
+import { readCartCookie, readCustomerTokenCookie } from "@/src/lib/session-cookies";
 import type { CustomerAddress } from "@/src/lib/commerce/types";
 import { ui } from "@/src/ui/styles";
 
@@ -101,8 +102,8 @@ export default async function CheckoutPage({
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const checkoutNotice = getCheckoutNotice(resolvedSearchParams);
   const cookieStore = await cookies();
-  const cartId = cookieStore.get("cart_id")?.value;
-  const customerToken = cookieStore.get("customer_token")?.value;
+  const cartId = readCartCookie(cookieStore);
+  const customerToken = readCustomerTokenCookie(cookieStore);
   let customerEmail: string | null = null;
   let defaultShippingAddress: CustomerAddress | null = null;
   if (customerToken) {

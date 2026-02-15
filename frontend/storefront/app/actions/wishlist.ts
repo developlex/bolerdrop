@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { CommerceError } from "@/src/lib/commerce/client";
 import { addProductToWishlist, getCustomerWishlist, removeWishlistItem } from "@/src/lib/commerce/customer";
+import { readCustomerTokenCookie } from "@/src/lib/session-cookies";
 
 function appendQuery(path: string, key: string, value: string): string {
   const [pathname, query = ""] = path.split("?", 2);
@@ -42,7 +43,7 @@ export async function addToWishlistAction(formData: FormData): Promise<void> {
   }
 
   const cookieStore = await cookies();
-  const token = cookieStore.get("customer_token")?.value;
+  const token = readCustomerTokenCookie(cookieStore);
   if (!token) {
     redirect("/login?error=wishlist-auth");
   }
@@ -79,7 +80,7 @@ export async function removeFromWishlistBySkuAction(formData: FormData): Promise
   }
 
   const cookieStore = await cookies();
-  const token = cookieStore.get("customer_token")?.value;
+  const token = readCustomerTokenCookie(cookieStore);
   if (!token) {
     redirect("/login?error=wishlist-auth");
   }

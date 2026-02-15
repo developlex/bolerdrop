@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { CommerceError } from "@/src/lib/commerce/client";
 import { hasMinimumPasswordLength, normalizePassword } from "@/src/lib/forms/password";
 import { US_COUNTRY_CODE } from "@/src/lib/forms/us-states";
+import { readCustomerTokenCookie } from "@/src/lib/session-cookies";
 import {
   changeCustomerPassword,
   createCustomerAddress,
@@ -21,7 +22,7 @@ import {
 import type { CustomerAddressInput } from "@/src/lib/commerce/types";
 
 function requireCustomerToken(cookieStore: Awaited<ReturnType<typeof cookies>>): string {
-  const token = cookieStore.get("customer_token")?.value;
+  const token = readCustomerTokenCookie(cookieStore);
   if (!token) {
     redirect("/login");
   }
