@@ -3,7 +3,7 @@
 Status: ACTIVE  
 Type: Documentation coverage audit  
 Scope: All files under `/docs`  
-Last updated: 2026-02-12
+Last updated: 2026-02-15
 
 ## 1. Purpose
 
@@ -40,7 +40,7 @@ It is used to:
 | `docs/DATA_LIFECYCLE.md` | DRAFT | 90% | Data ownership boundaries, retention/deletion lifecycle, and store-vs-platform responsibilities are now defined. |
 | `docs/INTEGRATION_MODEL.md` | DRAFT | 90% | Integration directionality, ownership boundaries, and security/isolation constraints are now defined. |
 | `docs/STORE_FRONTEND_UX.md` | DRAFT | 92% | Checkout model includes physical-cart shipping requirements and registered-customer scope now explicitly includes registration support. |
-| `docs/STOREFRONT_FUNCTIONALITY_MATRIX.md` | DRAFT | 95% | Magento baseline storefront capability matrix now tracks parity coverage plus active next-step queue (cart mutations, checkout fallback, end-to-end smoke, and error mapping docs). |
+| `docs/STOREFRONT_FUNCTIONALITY_MATRIX.md` | DRAFT | 96% | Coverage matrix now reflects signed-in checkout auto-prefill behavior alongside guest flow and remaining zero-shipping fallback gap. |
 | `docs/ADMIN_UX.md` | DRAFT | 90% | Conceptual store-admin workflows, boundaries, and separation from platform operations are now defined. |
 | `docs/PRODUCT_MODEL.md` | DRAFT | 90% | Conceptual product/variant/pricing/inventory model and boundaries are now explicitly defined. |
 | `docs/FRONTEND_ARCHITECTURE.md` | DRAFT | 97% | Frontend boundaries now include canonical pagination URL rules, SEO verification linkage, and runtime-resolved theme profile handling in the application shell. |

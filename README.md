@@ -25,6 +25,7 @@ This project is not a single-store custom theme repo; it is a multi-instance pla
 - Documentation readiness gate is marked `READY` in `docs/DOCUMENTATION_AUDIT.md`.
 - Implementation is in Phase 4 parity hardening (storefront/account/cart/checkout focus) per `docs/IMPLEMENTATION_ROADMAP.md`.
 - Storefront coverage is tracked in `docs/STOREFRONT_FUNCTIONALITY_MATRIX.md`.
+- Checkout now supports both guest and signed-in flows, with signed-in checkout prefilled from account email/default shipping address.
 
 ## Repository Map
 
